@@ -1,0 +1,118 @@
+erDiagram
+User {
+Guid UserId PK "Primary Key"
+string Email
+string FirstName
+string LastName
+string AuthenticationProviderId
+datetime CreatedAt
+datetime UpdatedAt
+}
+
+    Space {
+        Guid SpaceId PK "Primary Key"
+        Guid OwnerId FK "Owner (User)"
+        string Name
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    SpaceMember {
+        Guid UserId PK, FK "User"
+        Guid SpaceId PK, FK "Space"
+        SpaceRole Role
+        datetime JoinedAt
+    }
+
+    Account {
+        Guid AccountId PK "Primary Key"
+        Guid SpaceId FK "Space"
+        string Name
+        AccountType Type
+        decimal StartingBalance
+        decimal CurrentBalance
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    Category {
+        Guid CategoryId PK "Primary Key"
+        Guid SpaceId FK "Space"
+        string Name
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    Expense {
+        Guid ExpenseId PK "Primary Key"
+        Guid SpaceId FK "Space"
+        Guid AccountId FK "Account"
+        Guid AddedByUserId FK "User"
+        Guid CategoryId FK "Category"
+        string Title
+        decimal Amount
+        date Date
+        string Notes
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    Income {
+        Guid IncomeId PK "Primary Key"
+        Guid SpaceId FK "Space"
+        Guid AccountId FK "Account"
+        Guid AddedByUserId FK "User"
+        string Title
+        decimal Amount
+        date Date
+        string Notes
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    Budget {
+        Guid BudgetId PK "Primary Key"
+        Guid SpaceId FK "Space"
+        Guid CategoryId FK "Category"
+        decimal Amount
+        date StartDate
+        date EndDate
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    SavingsGoal {
+        Guid GoalId PK "Primary Key"
+        Guid SpaceId FK "Space"
+        string Name
+        decimal TargetAmount
+        decimal CurrentAmount
+        date TargetDate
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    %% --- Relationships ---
+
+    User ||--o{ Space : "owns"
+    User ||--o{ SpaceMember : "is"
+    User ||--o{ Expense : "adds"
+    User ||--o{ Income : "adds"
+
+    Space ||--|{ User : "owned by"
+    Space ||--o{ SpaceMember : "has"
+    Space ||--o{ Account : "has"
+    Space ||--o{ Category : "has"
+    Space ||--o{ Expense : "contains"
+    Space ||--o{ Income : "contains"
+    Space ||--o{ Budget : "has"
+    Space ||--o{ SavingsGoal : "has"
+
+    SpaceMember }o--|| User : "maps"
+    SpaceMember }o--|| Space : "maps"
+
+    Account ||--o{ Expense : "logs"
+    Account ||--o{ Income : "receives"
+    
+    Category ||--o{ Expense : "categorizes"
+    Category ||--o{ Budget : "defines"
