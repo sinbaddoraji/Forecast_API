@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import SigninCallback from './SigninCallback';
 import SignoutCallback from './SignoutCallback';
-import BudgetingPWA from './components/BudgetingPWA';
+import BudgetingPWANew from './components/BudgetingPWANew';
 import Login from './components/Login';
 
 const Home = () => {
@@ -26,7 +26,7 @@ function App() {
                     <Route path="/logout" element={<SignoutCallback />} />
                     <Route
                         path="/dashboard"
-                        element={<ProtectedRoute><BudgetingPWA /></ProtectedRoute>}
+                        element={<ProtectedRoute><BudgetingPWANew /></ProtectedRoute>}
                     />
                 </Routes>
             </Router>

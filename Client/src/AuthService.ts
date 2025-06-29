@@ -24,8 +24,8 @@ export const AuthService = {
     return userManager.signinRedirectCallback();
   },
 
-  signoutRedirectCallback: (): Promise<void> => {
-    return userManager.signoutRedirectCallback();
+  signoutRedirectCallback: async (): Promise<void> => {
+    await userManager.signoutRedirectCallback();
   },
 
   getAccessToken: async (): Promise<string | undefined> => {

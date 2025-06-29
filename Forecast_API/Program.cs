@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Forecast_API.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Forecast_API.Services;
 using Forecast_API.Authorization;
+using Forecast_API.Authentication;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Forecast_API;
@@ -24,32 +23,23 @@ public class Program
 
         // Register services
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddHttpClient<ITokenIntrospectionService, TokenIntrospectionService>();
 
-        // Configure JWT authentication
+        // Configure OAuth Introspection Authentication
         var authConfig = builder.Configuration.GetSection("Authentication:Zitadel");
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+        var authority = authConfig["Authority"];
+        var apiClientId = authConfig["ApiClientId"];
+        var introspectionEndpoint = authConfig["IntrospectionEndpoint"];
+        
+        // Log the configuration for debugging
+        Console.WriteLine($"Introspection Configuration - Authority: {authority}, ApiClientId: {apiClientId}, Endpoint: {introspectionEndpoint}");
+        
+        builder.Services.AddAuthentication("Introspection")
+            .AddScheme<IntrospectionAuthenticationSchemeOptions, IntrospectionAuthenticationHandler>("Introspection", options =>
             {
-                options.Authority = authConfig["Authority"];
-                options.Audience = authConfig["Audience"];
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    NameClaimType = "sub" // Use subject claim for User.Identity.Name
-                };
-
-                // Configure token validation events for JIT user provisioning
-                options.Events = new JwtBearerEvents
-                {
-                    OnTokenValidated = async context =>
-                    {
-                        var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                        await userService.GetOrCreateUserAsync(context.Principal!);
-                    }
-                };
+                options.Authority = authority ?? "";
+                options.ClientId = apiClientId ?? "";
+                options.ClientSecret = authConfig["ApiClientSecret"] ?? "";
             });
 
         // Configure authorization policies
@@ -67,7 +57,7 @@ public class Program
         {
             options.AddPolicy("AllowFrontend", policy =>
             {
-                policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // React dev server ports
+                policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5174") // React dev server ports
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();
@@ -75,6 +65,14 @@ public class Program
         });
 
         var app = builder.Build();
+
+        // Ensure database is created and migrations are applied in development
+        if (app.Environment.IsDevelopment())
+        {
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<CoreDbContext>();
+            context.Database.EnsureCreated();
+        }
 
         // Configure the HTTP request pipelsine.
         if (app.Environment.IsDevelopment())
