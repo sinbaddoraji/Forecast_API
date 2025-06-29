@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast | Demo</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f4f7fa;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --text-secondary-color: #777777;
+            --border-color: #e0e0e0;
+            --danger-color: #e94e77;
+            --success-color: #6dd47e;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0 0 80px 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: var(--background-color);
+        }
+
+        /* Header */
+        .app-header {
+            background-color: var(--card-background);
+            padding: 1rem 1.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Main Content */
+        .content-section {
+            display: none;
+            padding: 1.5rem;
+        }
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-background);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Wallet View */
+        .total-balance {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        .total-balance .amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .total-balance .label {
+            color: var(--text-secondary-color);
+        }
+
+        .account-item, .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .account-item:last-child, .transaction-item:last-child {
+            border-bottom: none;
+        }
+        .account-details, .transaction-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .account-name, .transaction-title {
+            font-weight: 500;
+        }
+        .account-type, .transaction-category {
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+        .account-balance, .transaction-amount {
+            font-weight: 600;
+        }
+        .transaction-amount.expense {
+            color: var(--danger-color);
+        }
+        .transaction-amount.income {
+            color: var(--success-color);
+        }
+
+        /* Budgets View */
+        .budget-item {
+            margin-bottom: 1.5rem;
+        }
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 5px;
+        }
+        .budget-summary {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+            text-align: right;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--card-background);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .nav-item {
+            flex-grow: 1;
+            text-align: center;
+            padding: 0.75rem 0;
+            cursor: pointer;
+            color: var(--text-secondary-color);
+            transition: color 0.2s;
+        }
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+        .nav-item .icon {
+            font-size: 1.5rem;
+        }
+        .nav-item .label {
+            font-size: 0.75rem;
+            display: block;
+        }
+        #add-fab {
+            color: white;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transform: translateY(-20px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+            border: 2px solid var(--card-background);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header">
+            Forecast
+        </header>
+
+        <main>
+            <!-- Wallet / Accounts View -->
+            <section id="wallet-view" class="content-section active">
+                <div class="card total-balance">
+                    <div class="label">Total Balance</div>
+                    <div class="amount">$1,250.75</div>
+                </div>
+
+                <div class="card">
+                    <h2 class="section-title">Accounts</h2>
+                    <div class="account-item">
+                        <div class="account-details">
+                            <span class="account-name">FNB Account</span>
+                            <span class="account-type">Bank Account</span>
+                        </div>
+                        <span class="account-balance">$850.00</span>
+                    </div>
+                    <div class="account-item">
+                        <div class="account-details">
+                            <span class="account-name">Airtel Mobile Money</span>
+                            <span class="account-type">Mobile Money</span>
+                        </div>
+                        <span class="account-balance">$400.75</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="section-title">Recent Transactions</h2>
+                    <div class="transaction-item">
+                        <div class="transaction-details">
+                            <span class="transaction-title">Groceries</span>
+                            <span class="transaction-category">Food</span>
+                        </div>
+                        <span class="transaction-amount expense">-$55.40</span>
+                    </div>
+                    <div class="transaction-item">
+                        <div class="transaction-details">
+                            <span class="transaction-title">Salary</span>
+                            <span class="transaction-category">Income</span>
+                        </div>
+                        <span class="transaction-amount income">+$2,000.00</span>
+                    </div>
+                    <div class="transaction-item">
+                        <div class="transaction-details">
+                            <span class="transaction-title">Netflix Subscription</span>
+                            <span class="transaction-category">Entertainment</span>
+                        </div>
+                        <span class="transaction-amount expense">-$15.99</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Budgets View -->
+            <section id="budgets-view" class="content-section">
+                <h2 class="section-title">Monthly Budgets</h2>
+                <div class="card">
+                    <div class="budget-item">
+                        <div class="budget-header">
+                            <span>Groceries</span>
+                            <span>$250 / $400</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 62.5%;"></div>
+                        </div>
+                        <div class="budget-summary">$150 remaining</div>
+                    </div>
+                     <div class="budget-item">
+                        <div class="budget-header">
+                            <span>Transport</span>
+                            <span>$80 / $100</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 80%;"></div>
+                        </div>
+                         <div class="budget-summary">$20 remaining</div>
+                    </div>
+                     <div class="budget-item">
+                        <div class="budget-header">
+                            <span>Entertainment</span>
+                            <span>$120 / $100</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: 100%; background-color: var(--danger-color);"></div>
+                        </div>
+                         <div class="budget-summary">$20 overspent</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Insights View -->
+            <section id="insights-view" class="content-section">
+                 <h2 class="section-title">Insights</h2>
+                 <div class="card">
+                    This section will contain charts and graphs visualizing your spending habits.
+                 </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-view="wallet-view">
+                <span class="icon">&#128176;</span>
+                <span class="label">Wallet</span>
+            </div>
+            <div class="nav-item" data-view="budgets-view">
+                <span class="icon">&#128202;</span>
+                <span class="label">Budgets</span>
+            </div>
+            <div id="add-fab" class="nav-item">
+                <span class="icon">+</span>
+            </div>
+            <div class="nav-item" data-view="insights-view">
+                <span class="icon">&#128200;</span>
+                <span class="label">Insights</span>
+            </div>
+            <div class="nav-item">
+                <span class="icon">&#9881;</span>
+                <span class="label">Settings</span>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.bottom-nav .nav-item[data-view]');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Handle active state for nav items
+                    navItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const targetView = item.getAttribute('data-view');
+
+                    // Show the selected content section
+                    contentSections.forEach(section => {
+                        if (section.id === targetView) {
+                            section.classList.add('active');
+                        } else {
+                            section.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant User
+    participant ReactClient as React Client (Browser)
+    participant Zitadel as Zitadel (IdP)
+    participant BackendApi as ASP.NET Core API
+
+    User->>+ReactClient: Clicks Login
+    ReactClient->>ReactClient: Generate code_verifier & code_challenge
+    ReactClient->>+User: Redirect to Zitadel with code_challenge
+    User->>+Zitadel: Authenticates (e.g., user/pass)
+    Zitadel->>-User: Redirect back to client with authorization_code
+
+    User->>-ReactClient: Delivers authorization_code
+
+    Note right of ReactClient: Client now has the authorization code.
+
+    ReactClient->>+Zitadel: Exchange authorization_code + code_verifier for tokens
+    Zitadel->>-ReactClient: Returns JWT (Access & ID Tokens)
+
+    Note right of ReactClient: Tokens are stored securely.
+
+    ReactClient->>+BackendApi: API Request with Access Token
+    BackendApi->>Zitadel: Fetch public key to validate token signature
+    Zitadel->>BackendApi: Provides public key
+    BackendApi->>BackendApi: Validate JWT (signature, issuer, audience, expiry)
+    Note right of BackendApi: JIT User Provisioning if first login.
+    BackendApi->>BackendApi: Check Space membership for authorization
+    BackendApi-->>-ReactClient: Returns secured data
+
+    ReactClient->>User: Display data

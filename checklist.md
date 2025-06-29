@@ -10,10 +10,10 @@
 - [x] Set up Entity Framework DbContext and relationships
 
 ### Authentication & Authorization
-- [ ] Implement JWT bearer authentication middleware (Zitadel)
-- [ ] Create custom Authorization Handler (SpaceMemberRequirement)
-- [ ] Register authorization policy in Program.cs
-- [ ] Secure all endpoints with custom authorization policy
+- [x] Implement JWT bearer authentication middleware (Zitadel)
+- [x] Create custom Authorization Handler (SpaceMemberRequirement)
+- [x] Register authorization policy in Program.cs
+- [x] Secure all endpoints with custom authorization policy
 
 ### User & Space Management
 - [ ] Create POST /api/auth/register endpoint
