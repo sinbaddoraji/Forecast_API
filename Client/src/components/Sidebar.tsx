@@ -13,6 +13,7 @@ export const Sidebar: FC<SidebarProps> = ({ state, dispatch }) => {
   
   const navItems = [
     { view: 'dashboard', label: 'Dashboard', icon: Home },
+    { view: 'accounts', label: 'Wallet', icon: Wallet },
     { view: 'transactions', label: 'Transactions', icon: TrendingUp },
     { view: 'budgets', label: 'Budgets', icon: Target },
     { view: 'goals', label: 'Goals', icon: PiggyBank },

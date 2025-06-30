@@ -36,14 +36,88 @@
 - [x] Configure JSON serialization to handle entity reference cycles
 
 ### Core Feature Endpoints (CRUD)
-- [ ] Create API controllers for:
-  - [ ] Accounts
-  - [ ] Expenses
-  - [ ] Incomes
-  - [ ] Budgets
-  - [ ] SavingsGoals
-  - [ ] Categories
-- [ ] Implement RESTful endpoints (GET, POST, PUT, DELETE) for each
+
+#### Accounts Management
+- [ ] Create Acc ountsController
+- [ ] Implement GET /api/spaces/{spaceId}/accounts - List all accounts in a space
+- [ ] Implement GET /api/spaces/{spaceId}/accounts/{accountId} - Get specific account details
+- [ ] Implement POST /api/spaces/{spaceId}/accounts - Create new account
+- [ ] Implement PUT /api/spaces/{spaceId}/accounts/{accountId} - Update account details
+- [ ] Implement DELETE /api/spaces/{spaceId}/accounts/{accountId} - Delete account
+- [ ] Implement GET /api/spaces/{spaceId}/accounts/{accountId}/balance - Get current balance
+- [ ] Implement GET /api/spaces/{spaceId}/accounts/{accountId}/transactions - Get account transaction history
+
+#### Expenses Management
+- [ ] Create ExpensesController
+- [ ] Implement GET /api/spaces/{spaceId}/expenses - List expenses with filtering/pagination
+- [ ] Implement GET /api/spaces/{spaceId}/expenses/{expenseId} - Get specific expense
+- [ ] Implement POST /api/spaces/{spaceId}/expenses - Create new expense
+- [ ] Implement PUT /api/spaces/{spaceId}/expenses/{expenseId} - Update expense
+- [ ] Implement DELETE /api/spaces/{spaceId}/expenses/{expenseId} - Delete expense
+- [ ] Implement GET /api/spaces/{spaceId}/expenses/summary - Get expense summaries by category/period
+- [ ] Implement GET /api/spaces/{spaceId}/expenses/recent - Get recent expenses
+
+#### Income Management
+- [ ] Create IncomesController
+- [ ] Implement GET /api/spaces/{spaceId}/incomes - List incomes with filtering/pagination
+- [ ] Implement GET /api/spaces/{spaceId}/incomes/{incomeId} - Get specific income
+- [ ] Implement POST /api/spaces/{spaceId}/incomes - Create new income
+- [ ] Implement PUT /api/spaces/{spaceId}/incomes/{incomeId} - Update income
+- [ ] Implement DELETE /api/spaces/{spaceId}/incomes/{incomeId} - Delete income
+- [ ] Implement GET /api/spaces/{spaceId}/incomes/summary - Get income summaries by period
+- [ ] Implement GET /api/spaces/{spaceId}/incomes/recent - Get recent incomes
+
+#### Categories Management
+- [ ] Create CategoriesController
+- [ ] Implement GET /api/spaces/{spaceId}/categories - List all categories in a space
+- [ ] Implement GET /api/spaces/{spaceId}/categories/{categoryId} - Get specific category
+- [ ] Implement POST /api/spaces/{spaceId}/categories - Create new category
+- [ ] Implement PUT /api/spaces/{spaceId}/categories/{categoryId} - Update category
+- [ ] Implement DELETE /api/spaces/{spaceId}/categories/{categoryId} - Delete category
+- [ ] Implement GET /api/spaces/{spaceId}/categories/{categoryId}/expenses - Get expenses by category
+- [ ] Implement GET /api/spaces/{spaceId}/categories/spending-summary - Get spending by category
+
+#### Budgets Management
+- [ ] Create BudgetsController
+- [ ] Implement GET /api/spaces/{spaceId}/budgets - List budgets with current period status
+- [ ] Implement GET /api/spaces/{spaceId}/budgets/{budgetId} - Get specific budget with progress
+- [ ] Implement POST /api/spaces/{spaceId}/budgets - Create new budget
+- [ ] Implement PUT /api/spaces/{spaceId}/budgets/{budgetId} - Update budget
+- [ ] Implement DELETE /api/spaces/{spaceId}/budgets/{budgetId} - Delete budget
+- [ ] Implement GET /api/spaces/{spaceId}/budgets/current - Get current period budgets with spending
+- [ ] Implement GET /api/spaces/{spaceId}/budgets/{budgetId}/progress - Get detailed budget progress
+- [ ] Implement GET /api/spaces/{spaceId}/budgets/alerts - Get budget alerts/warnings
+
+#### Savings Goals Management
+- [ ] Create SavingsGoalsController
+- [ ] Implement GET /api/spaces/{spaceId}/savingsgoals - List all savings goals
+- [ ] Implement GET /api/spaces/{spaceId}/savingsgoals/{goalId} - Get specific goal with progress
+- [ ] Implement POST /api/spaces/{spaceId}/savingsgoals - Create new savings goal
+- [ ] Implement PUT /api/spaces/{spaceId}/savingsgoals/{goalId} - Update savings goal
+- [ ] Implement DELETE /api/spaces/{spaceId}/savingsgoals/{goalId} - Delete savings goal
+- [ ] Implement POST /api/spaces/{spaceId}/savingsgoals/{goalId}/contribute - Add contribution to goal
+- [ ] Implement POST /api/spaces/{spaceId}/savingsgoals/{goalId}/withdraw - Withdraw from goal
+- [ ] Implement GET /api/spaces/{spaceId}/savingsgoals/{goalId}/history - Get contribution history
+- [ ] Implement GET /api/spaces/{spaceId}/savingsgoals/summary - Get goals progress summary
+
+#### Financial Analytics & Reports
+- [ ] Create AnalyticsController
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/spending-trends - Get spending trends over time
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/income-trends - Get income trends over time
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/cash-flow - Get cash flow analysis
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/category-breakdown - Get spending by category
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/monthly-summary - Get monthly financial summary
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/budget-performance - Get budget vs actual performance
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/net-worth - Calculate net worth over time
+- [ ] Implement GET /api/spaces/{spaceId}/analytics/projections - Get financial projections
+
+#### Data Import/Export
+- [ ] Create ImportExportController
+- [ ] Implement POST /api/spaces/{spaceId}/import/csv - Import transactions from CSV
+- [ ] Implement POST /api/spaces/{spaceId}/import/bank - Import from bank API/file formats
+- [ ] Implement GET /api/spaces/{spaceId}/export/csv - Export transactions to CSV
+- [ ] Implement GET /api/spaces/{spaceId}/export/pdf-report - Generate PDF financial report
+- [ ] Implement GET /api/spaces/{spaceId}/export/excel - Export data to Excel format
 
 ### Business Logic & Services
 - [ ] Implement transaction logic for automatic account balance updates
@@ -89,11 +163,62 @@
 #### State Management & Core Features
 - [x] Implement SpaceContext for space state management
 - [x] Create SpaceSelector component for switching between spaces
-- [x] Build API service layer with comprehensive endpoints
-- [ ] Build "Wallet" page for account management
-- [ ] Build "Budgets" page for budget progress display
-- [ ] Create reusable forms for expenses/incomes with account selector
-- [ ] Connect financial components to state management and backend API
+- [x] Build API service layer with comprehensive endpoints for user/space management
+- [ ] Extend API service layer for financial endpoints (accounts, expenses, incomes, budgets, goals)
+
+#### Financial Management Pages
+- [ ] Build "Wallet/Accounts" page for account management
+  - [ ] List all accounts with balances
+  - [ ] Create/edit/delete accounts
+  - [ ] Account details view with transaction history
+  - [ ] Account balance tracking and updates
+- [ ] Build "Expenses" page for expense tracking
+  - [ ] Add new expense form with category and account selection
+  - [ ] List expenses with filtering and search
+  - [ ] Edit/delete existing expenses
+  - [ ] Expense summary views by category and time period
+- [ ] Build "Income" page for income tracking
+  - [ ] Add new income form with account selection
+  - [ ] List incomes with filtering and search
+  - [ ] Edit/delete existing incomes
+  - [ ] Income summary and trends
+- [ ] Build "Budgets" page for budget management
+  - [ ] Create/edit budget forms with category selection
+  - [ ] Budget progress displays with visual indicators
+  - [ ] Budget vs actual spending comparison
+  - [ ] Budget alerts and notifications
+- [ ] Build "Savings Goals" page for goal tracking
+  - [ ] Create/edit savings goals
+  - [ ] Goal progress visualization
+  - [ ] Contribution and withdrawal forms
+  - [ ] Goal achievement tracking
+
+#### Categories Management
+- [ ] Create Categories management component
+- [ ] Category selection components for expenses/budgets
+- [ ] Category spending analysis views
+- [ ] Custom category creation and editing
+
+#### Analytics & Reports Frontend
+- [ ] Build "Insights/Analytics" dashboard page
+  - [ ] Spending trends charts and graphs
+  - [ ] Income vs expenses comparison
+  - [ ] Category breakdown pie/bar charts
+  - [ ] Monthly/yearly financial summaries
+  - [ ] Net worth tracking over time
+  - [ ] Cash flow projections
+- [ ] Create interactive data visualization components
+- [ ] Implement export functionality (CSV, PDF reports)
+- [ ] Build responsive charts for mobile devices
+
+#### Forms & UI Components
+- [ ] Create reusable form components for financial data entry
+- [ ] Build amount input component with currency formatting
+- [ ] Create date picker components for transactions
+- [ ] Implement account selector dropdown component
+- [ ] Build category selector with icons
+- [ ] Create confirmation dialogs for delete operations
+- [ ] Implement loading states and error handling for all forms
 
 ### Phase 2 (V2 - Collaboration)
 - [x] Create "Manage Spaces" page

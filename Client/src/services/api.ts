@@ -24,7 +24,17 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+      try {
+        const errorBody = await response.text();
+        if (errorBody) {
+          console.error('API Error Details:', errorBody);
+          errorMessage += ` - ${errorBody}`;
+        }
+      } catch (e) {
+        // Ignore JSON parsing errors
+      }
+      throw new Error(errorMessage);
     }
 
     return response;
@@ -161,26 +171,72 @@ class ApiService {
   // Account endpoints
   async getAccounts(spaceId: string): Promise<Account[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts`);
-    return response.json();
+    const accountsData = await response.json();
+    
+    // Transform the backend response to match our Account interface (backend uses PascalCase)
+    return accountsData.map((account: any) => ({
+      accountId: account.AccountId || account.accountId,
+      spaceId: account.SpaceId || account.spaceId,
+      name: account.Name || account.name,
+      type: account.Type || account.type,
+      startingBalance: account.StartingBalance || account.startingBalance,
+      currentBalance: account.CurrentBalance || account.currentBalance,
+      createdAt: new Date(account.CreatedAt || account.createdAt),
+      updatedAt: new Date(account.UpdatedAt || account.updatedAt)
+    }));
   }
 
   async getAccount(spaceId: string, accountId: string): Promise<Account> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts/${accountId}`);
-    return response.json();
+    const accountData = await response.json();
+    
+    // Transform the response to match our Account interface (backend uses PascalCase)
+    return {
+      accountId: accountData.AccountId || accountData.accountId,
+      spaceId: accountData.SpaceId || accountData.spaceId,
+      name: accountData.Name || accountData.name,
+      type: accountData.Type || accountData.type,
+      startingBalance: accountData.StartingBalance || accountData.startingBalance,
+      currentBalance: accountData.CurrentBalance || accountData.currentBalance,
+      createdAt: new Date(accountData.CreatedAt || accountData.createdAt),
+      updatedAt: new Date(accountData.UpdatedAt || accountData.updatedAt)
+    };
   }
 
   async createAccount(spaceId: string, account: Omit<Account, 'accountId' | 'spaceId' | 'createdAt' | 'updatedAt'>): Promise<Account> {
+    const createDto = {
+      name: account.name,
+      type: account.type,
+      startingBalance: account.startingBalance
+    };
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts`, {
       method: 'POST',
-      body: JSON.stringify(account),
+      body: JSON.stringify(createDto),
     });
-    return response.json();
+    const createdAccount = await response.json();
+    
+    // Transform the response to match our Account interface (backend uses PascalCase)
+    return {
+      accountId: createdAccount.AccountId || createdAccount.accountId,
+      spaceId: createdAccount.SpaceId || createdAccount.spaceId,
+      name: createdAccount.Name || createdAccount.name,
+      type: createdAccount.Type || createdAccount.type,
+      startingBalance: createdAccount.StartingBalance || createdAccount.startingBalance,
+      currentBalance: createdAccount.CurrentBalance || createdAccount.currentBalance,
+      createdAt: new Date(createdAccount.CreatedAt || createdAccount.createdAt),
+      updatedAt: new Date(createdAccount.UpdatedAt || createdAccount.updatedAt)
+    };
   }
 
   async updateAccount(spaceId: string, account: Account): Promise<void> {
+    const updateDto = {
+      name: account.name,
+      type: account.type,
+      currentBalance: account.currentBalance
+    };
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts/${account.accountId}`, {
       method: 'PUT',
-      body: JSON.stringify(account),
+      body: JSON.stringify(updateDto),
     });
   }
 
@@ -188,6 +244,38 @@ class ApiService {
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts/${accountId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getAccountBalance(spaceId: string, accountId: string): Promise<{
+    accountId: string;
+    name: string;
+    currentBalance: number;
+    startingBalance: number;
+    lastUpdated: string;
+  }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts/${accountId}/balance`);
+    return response.json();
+  }
+
+  async getAccountTransactions(spaceId: string, accountId: string, page: number = 1, pageSize: number = 50): Promise<{
+    accountId: string;
+    accountName: string;
+    transactions: Array<{
+      id: string;
+      type: 'Expense' | 'Income';
+      title: string;
+      amount: number;
+      date: string;
+      categoryId?: string;
+      notes?: string;
+    }>;
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts/${accountId}/transactions?page=${page}&pageSize=${pageSize}`);
+    return response.json();
   }
 
   // Category endpoints

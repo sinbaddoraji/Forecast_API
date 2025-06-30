@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { SpaceProvider, useSpace } from '../contexts/SpaceContext';
+import { useSpace } from '../contexts/SpaceContext';
 import { Modal } from './Modal';
 import { Sidebar } from './Sidebar';
 import { HeaderNew } from './HeaderNew';
 import { MobileNav } from './MobileNav';
 import { DashboardNew } from './DashboardNew';
+import { AccountsView } from './AccountsView';
 import { TransactionsViewNew } from './TransactionsViewNew';
 import { BudgetsViewNew } from './BudgetsViewNew';
 import { GoalsViewNew } from './GoalsViewNew';
@@ -71,6 +72,8 @@ const BudgetingPWAContent: React.FC<BudgetingPWAContentProps> = ({
 
   const renderView = () => {
     switch (currentView) {
+      case 'accounts':
+        return <AccountsView showBalances={showBalances} />;
       case 'transactions':
         return <TransactionsViewNew onAddTransaction={() => setShowAddTransaction(true)} />;
       case 'budgets':
@@ -169,13 +172,11 @@ export default function BudgetingPWANew() {
   const [showBalances, setShowBalances] = useState(true);
 
   return (
-    <SpaceProvider>
-      <BudgetingPWAContent 
-        currentView={currentView}
-        setCurrentView={setCurrentView}
-        showBalances={showBalances}
-        setShowBalances={setShowBalances}
-      />
-    </SpaceProvider>
+    <BudgetingPWAContent 
+      currentView={currentView}
+      setCurrentView={setCurrentView}
+      showBalances={showBalances}
+      setShowBalances={setShowBalances}
+    />
   );
 }

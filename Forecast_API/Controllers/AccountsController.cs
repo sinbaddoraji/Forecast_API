@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Forecast_API.Models;
+using Forecast_API.Models.DTOs;
 using Forecast_API.Data;
 using Microsoft.EntityFrameworkCore;
 using Forecast_API.Services;
@@ -29,18 +30,58 @@ namespace Forecast_API.Controllers
             return authorizationResult.Succeeded;
         }
 
+        private AccountType MapAccountType(string frontendType)
+        {
+            return frontendType.ToLower() switch
+            {
+                "checking" => AccountType.BankAccount,
+                "savings" => AccountType.BankAccount,
+                "creditcard" => AccountType.VirtualWallet,
+                "cash" => AccountType.Cash,
+                "investment" => AccountType.VirtualWallet,
+                "other" => AccountType.VirtualWallet,
+                _ => AccountType.BankAccount
+            };
+        }
+
+        private string MapAccountTypeToFrontend(AccountType backendType)
+        {
+            return backendType switch
+            {
+                AccountType.BankAccount => "Checking",
+                AccountType.MobileMoney => "Other",
+                AccountType.Cash => "Cash",
+                AccountType.VirtualWallet => "Other",
+                _ => "Other"
+            };
+        }
+
         // GET: api/spaces/{spaceId}/accounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Account>>> GetAccounts(Guid spaceId)
+        public async Task<ActionResult<IEnumerable<object>>> GetAccounts(Guid spaceId)
         {
             if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
 
-            return await _context.Accounts.Where(a => a.SpaceId == spaceId).ToListAsync();
+            var accounts = await _context.Accounts.Where(a => a.SpaceId == spaceId).ToListAsync();
+            
+            var accountsWithMappedTypes = accounts.Select(a => new
+            {
+                AccountId = a.AccountId,
+                SpaceId = a.SpaceId,
+                Name = a.Name,
+                Type = MapAccountTypeToFrontend(a.Type),
+                StartingBalance = a.StartingBalance,
+                CurrentBalance = a.CurrentBalance,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt
+            });
+
+            return Ok(accountsWithMappedTypes);
         }
 
         // GET: api/spaces/{spaceId}/accounts/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Account>> GetAccount(Guid spaceId, Guid id)
+        public async Task<ActionResult<object>> GetAccount(Guid spaceId, Guid id)
         {
             if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
 
@@ -51,42 +92,82 @@ namespace Forecast_API.Controllers
                 return NotFound();
             }
 
-            return account;
+            return new
+            {
+                AccountId = account.AccountId,
+                SpaceId = account.SpaceId,
+                Name = account.Name,
+                Type = MapAccountTypeToFrontend(account.Type),
+                StartingBalance = account.StartingBalance,
+                CurrentBalance = account.CurrentBalance,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt
+            };
         }
 
         // POST: api/spaces/{spaceId}/accounts
         [HttpPost]
-        public async Task<ActionResult<Account>> PostAccount(Guid spaceId, Account account)
+        public async Task<ActionResult<object>> PostAccount(Guid spaceId, CreateAccountDto createAccountDto)
         {
             if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
 
-            // Ensure the account is associated with the correct space
-            account.SpaceId = spaceId;
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var account = new Account
+            {
+                AccountId = Guid.NewGuid(),
+                SpaceId = spaceId,
+                Name = createAccountDto.Name,
+                Type = MapAccountType(createAccountDto.Type),
+                StartingBalance = createAccountDto.StartingBalance,
+                CurrentBalance = createAccountDto.StartingBalance,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
             
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAccount), new { spaceId = spaceId, id = account.AccountId }, account);
+            var response = new
+            {
+                AccountId = account.AccountId,
+                SpaceId = account.SpaceId,
+                Name = account.Name,
+                Type = MapAccountTypeToFrontend(account.Type),
+                StartingBalance = account.StartingBalance,
+                CurrentBalance = account.CurrentBalance,
+                CreatedAt = account.CreatedAt,
+                UpdatedAt = account.UpdatedAt
+            };
+
+            return CreatedAtAction(nameof(GetAccount), new { spaceId = spaceId, id = account.AccountId }, response);
         }
 
         // PUT: api/spaces/{spaceId}/accounts/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(Guid spaceId, Guid id, Account account)
+        public async Task<IActionResult> PutAccount(Guid spaceId, Guid id, UpdateAccountDto updateAccountDto)
         {
-            if (id != account.AccountId)
-            {
-                return BadRequest();
-            }
-
             if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
             
-            // Ensure the entity being updated belongs to the correct space
-            if (!_context.Accounts.Any(a => a.AccountId == id && a.SpaceId == spaceId))
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existingAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == id && a.SpaceId == spaceId);
+            if (existingAccount == null)
             {
                 return NotFound();
             }
 
-            _context.Entry(account).State = EntityState.Modified;
+            // Update only allowed fields
+            existingAccount.Name = updateAccountDto.Name;
+            existingAccount.Type = MapAccountType(updateAccountDto.Type);
+            existingAccount.CurrentBalance = updateAccountDto.CurrentBalance;
+            existingAccount.UpdatedAt = DateTime.UtcNow;
 
             try
             {
@@ -123,6 +204,91 @@ namespace Forecast_API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // GET: api/spaces/{spaceId}/accounts/{id}/balance
+        [HttpGet("{id}/balance")]
+        public async Task<ActionResult<object>> GetAccountBalance(Guid spaceId, Guid id)
+        {
+            if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
+
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == id && a.SpaceId == spaceId);
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            return new
+            {
+                AccountId = account.AccountId,
+                Name = account.Name,
+                CurrentBalance = account.CurrentBalance,
+                StartingBalance = account.StartingBalance,
+                LastUpdated = account.UpdatedAt
+            };
+        }
+
+        // GET: api/spaces/{spaceId}/accounts/{id}/transactions
+        [HttpGet("{id}/transactions")]
+        public async Task<ActionResult<object>> GetAccountTransactions(Guid spaceId, Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        {
+            if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
+
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == id && a.SpaceId == spaceId);
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            // Get expenses for this account
+            var expenses = await _context.Expenses
+                .Where(e => e.AccountId == id && e.SpaceId == spaceId)
+                .Select(e => new
+                {
+                    Id = e.ExpenseId,
+                    Type = "Expense",
+                    Title = e.Title,
+                    Amount = -e.Amount, // Negative for expense
+                    Date = e.Date,
+                    CategoryId = e.CategoryId,
+                    Notes = e.Notes
+                })
+                .ToListAsync();
+
+            // Get incomes for this account
+            var incomes = await _context.Incomes
+                .Where(i => i.AccountId == id && i.SpaceId == spaceId)
+                .Select(i => new
+                {
+                    Id = i.IncomeId,
+                    Type = "Income",
+                    Title = i.Title,
+                    Amount = i.Amount, // Positive for income
+                    Date = i.Date,
+                    CategoryId = (Guid?)null,
+                    Notes = (string?)null
+                })
+                .ToListAsync();
+
+            // Combine and sort by date
+            var allTransactions = expenses.Cast<object>().Concat(incomes.Cast<object>())
+                .OrderByDescending(t => ((dynamic)t).Date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var totalCount = expenses.Count + incomes.Count;
+
+            return new
+            {
+                AccountId = account.AccountId,
+                AccountName = account.Name,
+                Transactions = allTransactions,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
         }
     }
 }

@@ -1,5 +1,5 @@
 import type { FC, Dispatch } from 'react';
-import { Home, TrendingUp, Target, PiggyBank, Plus } from 'lucide-react';
+import { Home, Wallet, Target, PiggyBank, Plus } from 'lucide-react';
 import type { AppState, AppAction } from '../types/budget';
 
 interface MobileNavProps {
@@ -11,7 +11,7 @@ interface MobileNavProps {
 export const MobileNav: FC<MobileNavProps> = ({ state, dispatch, onAddClick }) => {
   const navItems = [
     { view: 'dashboard', label: 'Home', icon: Home },
-    { view: 'transactions', label: 'History', icon: TrendingUp },
+    { view: 'accounts', label: 'Wallet', icon: Wallet },
     { view: 'budgets', label: 'Budgets', icon: Target },
     { view: 'goals', label: 'Goals', icon: PiggyBank },
   ];
