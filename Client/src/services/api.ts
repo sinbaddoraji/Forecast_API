@@ -38,24 +38,67 @@ class ApiService {
     return response.json();
   }
 
+  // User endpoints
+  async getCurrentUser(): Promise<User> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/users/me`);
+    return response.json();
+  }
+
+  async updateUserProfile(profile: { firstName?: string; lastName?: string; email?: string }): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/users/me`, {
+      method: 'PUT',
+      body: JSON.stringify(profile),
+    });
+  }
+
+  async getUserSpacesDetailed(): Promise<any[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/users/me/spaces`);
+    return response.json();
+  }
+
+  async searchUsers(email: string): Promise<any[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/users/search?email=${encodeURIComponent(email)}`);
+    return response.json();
+  }
+
+  async deleteUserAccount(): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/users/me`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getUserActivity(): Promise<any> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/users/me/activity`);
+    return response.json();
+  }
+
   // Space endpoints  
   async getUserSpaces(): Promise<Space[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces`);
     const spacesData = await response.json();
     
-    // Transform the backend response to match our Space interface
+    // Transform the backend response to match our Space interface (backend uses PascalCase)
     return spacesData.map((space: any) => ({
-      spaceId: space.spaceId,
-      name: space.name,
-      ownerId: space.ownerId,
-      createdAt: new Date(space.createdAt),
-      updatedAt: new Date(space.updatedAt)
+      spaceId: space.SpaceId || space.spaceId,
+      name: space.Name || space.name,
+      ownerId: space.OwnerId || space.ownerId,
+      createdAt: new Date(space.CreatedAt || space.createdAt),
+      updatedAt: new Date(space.UpdatedAt || space.updatedAt)
     }));
   }
 
   async getSpace(spaceId: string): Promise<Space> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}`);
-    return response.json();
+    const spaceData = await response.json();
+    
+    // Transform the response to match our Space interface (backend uses PascalCase)
+    return {
+      spaceId: spaceData.SpaceId || spaceData.spaceId,
+      name: spaceData.Name || spaceData.name,
+      ownerId: spaceData.OwnerId || spaceData.ownerId,
+      createdAt: new Date(spaceData.CreatedAt || spaceData.createdAt),
+      updatedAt: new Date(spaceData.UpdatedAt || spaceData.updatedAt)
+    };
   }
 
   async createSpace(space: Omit<Space, 'spaceId' | 'ownerId' | 'createdAt' | 'updatedAt'>): Promise<Space> {
@@ -65,13 +108,13 @@ class ApiService {
     });
     const createdSpace = await response.json();
     
-    // Transform the response to match our Space interface
+    // Transform the response to match our Space interface (backend uses PascalCase)
     return {
-      spaceId: createdSpace.spaceId,
-      name: createdSpace.name,
-      ownerId: createdSpace.ownerId,
-      createdAt: new Date(createdSpace.createdAt),
-      updatedAt: new Date(createdSpace.updatedAt)
+      spaceId: createdSpace.SpaceId || createdSpace.spaceId,
+      name: createdSpace.Name || createdSpace.name,
+      ownerId: createdSpace.OwnerId || createdSpace.ownerId,
+      createdAt: new Date(createdSpace.CreatedAt || createdSpace.createdAt),
+      updatedAt: new Date(createdSpace.UpdatedAt || createdSpace.updatedAt)
     };
   }
 

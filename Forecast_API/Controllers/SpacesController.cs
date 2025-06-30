@@ -69,7 +69,7 @@ namespace Forecast_API.Controllers
 
         // GET: api/spaces/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Space>> GetSpace(Guid id)
+        public async Task<ActionResult<object>> GetSpace(Guid id)
         {
             if (!await IsUserMemberOfSpace(id))
             {
@@ -83,12 +83,20 @@ namespace Forecast_API.Controllers
                 return NotFound();
             }
 
-            return space;
+            // Return a clean DTO without navigation properties to avoid cycles
+            return new
+            {
+                space.SpaceId,
+                space.Name,
+                space.OwnerId,
+                space.CreatedAt,
+                space.UpdatedAt
+            };
         }
 
         // POST: api/spaces
         [HttpPost]
-        public async Task<ActionResult<Space>> CreateSpace(CreateSpaceRequest request)
+        public async Task<ActionResult<object>> CreateSpace(CreateSpaceRequest request)
         {
             try
             {
@@ -117,7 +125,16 @@ namespace Forecast_API.Controllers
                 _context.SpaceMembers.Add(spaceMember);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetSpace), new { id = space.SpaceId }, space);
+                var spaceDto = new
+                {
+                    space.SpaceId,
+                    space.Name,
+                    space.OwnerId,
+                    space.CreatedAt,
+                    space.UpdatedAt
+                };
+                
+                return CreatedAtAction(nameof(GetSpace), new { id = space.SpaceId }, spaceDto);
             }
             catch (Exception ex)
             {

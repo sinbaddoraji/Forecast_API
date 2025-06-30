@@ -71,7 +71,7 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
         }
       }
       
-      return spaces;
+      // return spaces; // Don't return spaces to match interface
     } catch (err) {
       console.error('Error fetching spaces:', err);
       throw err;

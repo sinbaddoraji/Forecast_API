@@ -16,8 +16,24 @@
 - [x] Secure all endpoints with custom authorization policy
 
 ### User & Space Management
-- [ ] Create POST /api/auth/register endpoint
-- [ ] Implement user creation with default space logic
+- [x] Create POST /api/auth/register endpoint
+- [x] Implement user creation with default space logic
+- [x] Implement GET /api/spaces to list user spaces
+- [x] Implement GET /api/spaces/{id} to get space details
+- [x] Implement POST /api/spaces to create new spaces
+- [x] Implement PUT /api/spaces/{id} to update space details
+- [x] Implement DELETE /api/spaces/{id} to delete a space
+- [x] Implement GET /api/spaces/{id}/members to list members
+- [x] Implement POST /api/spaces/{id}/members to add a member
+- [x] Implement PUT /api/spaces/{id}/members/{userId} to update a member's role
+- [x] Implement DELETE /api/spaces/{id}/members/{userId} to remove a member
+- [x] Implement GET /api/users/me for user profile management
+- [x] Implement PUT /api/users/me to update user profile
+- [x] Implement GET /api/users/me/spaces for detailed space information
+- [x] Implement GET /api/users/search for user search functionality
+- [x] Implement GET /api/users/me/activity for user activity dashboard
+- [x] Implement DELETE /api/users/me for account deletion
+- [x] Configure JSON serialization to handle entity reference cycles
 
 ### Core Feature Endpoints (CRUD)
 - [ ] Create API controllers for:
@@ -55,21 +71,34 @@
 - [ ] Design bottom navigation (Wallet, Budgets, Insights)
 
 #### Authentication
-- [ ] Install and configure OIDC client library (oidc-client-ts)
-- [ ] Create AuthService module
-- [ ] Build ProtectedRoute component
-- [ ] Create login and callback page UI
+- [x] Install and configure OIDC client library (oidc-client-ts)
+- [x] Create AuthService module
+- [x] Build ProtectedRoute component
+- [x] Create login and callback page UI
+- [x] Implement AuthContext for state management
+
+#### User & Space Management Frontend
+- [x] Create UserProfile component for profile management
+- [x] Build SpaceManagement component for space administration
+- [x] Implement UserActivity dashboard component
+- [x] Create user menu dropdown in header with access to management features
+- [x] Implement user search functionality for adding space members
+- [x] Add space member management (add/remove/role management)
+- [x] Integrate user management components into existing header
 
 #### State Management & Core Features
-- [ ] Select and configure state management (Zustand/Redux Toolkit)
+- [x] Implement SpaceContext for space state management
+- [x] Create SpaceSelector component for switching between spaces
+- [x] Build API service layer with comprehensive endpoints
 - [ ] Build "Wallet" page for account management
 - [ ] Build "Budgets" page for budget progress display
 - [ ] Create reusable forms for expenses/incomes with account selector
-- [ ] Connect components to state management and backend API
+- [ ] Connect financial components to state management and backend API
 
 ### Phase 2 (V2 - Collaboration)
-- [ ] Create "Manage Spaces" page
-- [ ] Implement space-switcher in navigation UI
+- [x] Create "Manage Spaces" page
+- [x] Implement space-switcher in navigation UI
+- [x] Enable collaborative space features
 
 ## Infrastructure & Deployment
 
@@ -116,13 +145,17 @@
 - [x] SavingsGoal (GoalId, SpaceId, Name, TargetAmount, CurrentAmount, TargetDate)
 
 ## Core Features Implementation Status
-- [ ] Multi-tenant "Space" architecture
+- [x] Multi-tenant "Space" architecture
+- [x] User profile management and authentication
+- [x] Space creation, management, and collaboration
+- [x] User search and space member management
+- [x] Activity dashboard and user insights
 - [ ] Wallet/Account management
 - [ ] Expense & Income tracking
 - [ ] Budget management with visual feedback
 - [ ] Savings goals with progress tracking
 - [ ] Financial projections and forecasting
 - [ ] Data visualization & insights dashboard
-- [ ] Secure OAuth 2.0 authentication with PKCE
-- [ ] Collaborative spaces (V2)
+- [x] Secure OAuth 2.0 authentication with PKCE
+- [x] Collaborative spaces (V2) - Core functionality complete
 - [ ] Read-only offline access via service worker
