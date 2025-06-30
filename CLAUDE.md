@@ -9,6 +9,16 @@ This is a **Budgeting Progressive Web App (PWA)** built with:
 - **Hosting**: AWS Lambda + API Gateway (backend), Vercel (frontend)
 - **Architecture**: Multi-tenant "Space" based system
 
+## Environment Variables
+The backend is configured through `appsettings.Development.json`. The following variables are essential for running the application:
+
+- **`ConnectionStrings:DefaultConnection`**: The connection string for the PostgreSQL database.
+- **`Authentication:Zitadel:Authority`**: The URL of the Zitadel instance.
+- **`Authentication:Zitadel:ClientId`**: The client ID for the **frontend** application, used to validate the audience of the JWT.
+- **`Authentication:Zitadel:ApiClientId`**: The client ID for the **backend** API, used for token introspection.
+- **`Authentication:Zitadel:ApiClientSecret`**: The client secret for the **backend** API, used for token introspection.
+- **`Authentication:Zitadel:IntrospectionEndpoint`**: The URL of the Zitadel introspection endpoint.
+
 ## Key Commands
 ```bash
 # Backend Development

@@ -1,9 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
+import { SpaceProvider } from './contexts/SpaceContext';
 import ProtectedRoute from './ProtectedRoute';
 import SigninCallback from './SigninCallback';
 import SignoutCallback from './SignoutCallback';
 import BudgetingPWANew from './components/BudgetingPWANew';
+import { SpaceGuard } from './components/SpaceGuard';
 import Login from './components/Login';
 
 const Home = () => {
@@ -19,17 +21,25 @@ const Home = () => {
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/callback" element={<SigninCallback />} />
-                    <Route path="/logout" element={<SignoutCallback />} />
-                    <Route
-                        path="/dashboard"
-                        element={<ProtectedRoute><BudgetingPWANew /></ProtectedRoute>}
-                    />
-                </Routes>
-            </Router>
+            <SpaceProvider>
+                <Router>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/callback" element={<SigninCallback />} />
+                        <Route path="/logout" element={<SignoutCallback />} />
+                        <Route
+                            path="/dashboard"
+                            element={
+                                <ProtectedRoute>
+                                    <SpaceGuard>
+                                        <BudgetingPWANew />
+                                    </SpaceGuard>
+                                </ProtectedRoute>
+                            }
+                        />
+                    </Routes>
+                </Router>
+            </SpaceProvider>
         </AuthProvider>
     );
 }

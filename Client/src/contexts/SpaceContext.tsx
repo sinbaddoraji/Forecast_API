@@ -6,10 +6,13 @@ import type { User, Space } from '../types/api';
 interface SpaceContextType {
   currentUser: User | null;
   currentSpace: Space | null;
+  userSpaces: Space[];
   loading: boolean;
   error: string | null;
   switchSpace: (spaceId: string) => Promise<void>;
+  createSpace: (name: string) => Promise<Space>;
   refreshUser: () => Promise<void>;
+  refreshSpaces: () => Promise<void>;
 }
 
 const SpaceContext = createContext<SpaceContextType | undefined>(undefined);
@@ -26,11 +29,54 @@ interface SpaceProviderProps {
   children: ReactNode;
 }
 
+const SELECTED_SPACE_KEY = 'selectedSpaceId';
+
 export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentSpace, setCurrentSpace] = useState<Space | null>(null);
+  const [userSpaces, setUserSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const refreshSpaces = async () => {
+    try {
+      const spaces = await apiService.getUserSpaces();
+      setUserSpaces(spaces);
+      
+      // If no current space is selected, try to restore from localStorage or select the first space
+      if (!currentSpace && spaces.length > 0) {
+        const savedSpaceId = localStorage.getItem(SELECTED_SPACE_KEY);
+        const savedSpace = spaces.find(s => s.spaceId === savedSpaceId);
+        
+        if (savedSpace) {
+          setCurrentSpace(savedSpace);
+        } else {
+          // Select the first space by default
+          setCurrentSpace(spaces[0]);
+          localStorage.setItem(SELECTED_SPACE_KEY, spaces[0].spaceId);
+        }
+      } else if (currentSpace) {
+        // Update current space with latest data
+        const updatedSpace = spaces.find(s => s.spaceId === currentSpace.spaceId);
+        if (updatedSpace) {
+          setCurrentSpace(updatedSpace);
+        } else {
+          // Current space no longer exists
+          setCurrentSpace(spaces.length > 0 ? spaces[0] : null);
+          if (spaces.length > 0) {
+            localStorage.setItem(SELECTED_SPACE_KEY, spaces[0].spaceId);
+          } else {
+            localStorage.removeItem(SELECTED_SPACE_KEY);
+          }
+        }
+      }
+      
+      return spaces;
+    } catch (err) {
+      console.error('Error fetching spaces:', err);
+      throw err;
+    }
+  };
 
   const refreshUser = async () => {
     try {
@@ -44,44 +90,54 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
           const user = await apiService.register();
           setCurrentUser(user);
           
-          // For now, we'll assume the user has a default space
-          // In a real app, you'd fetch the user's spaces and let them choose
-          // This is a simplified version assuming single space
-          const mockSpace: Space = {
-            spaceId: user.userId, // Using userId as spaceId for simplicity
-            name: `${user.firstName}'s Budget`,
-            ownerId: user.userId,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-          setCurrentSpace(mockSpace);
+          // Fetch user's spaces
+          await refreshSpaces();
         } catch (apiError) {
           console.error('Error registering user with backend:', apiError);
-          // If backend registration fails, still clear user state
           setCurrentUser(null);
           setCurrentSpace(null);
+          setUserSpaces([]);
           setError('Failed to connect to backend. Please try logging in again.');
         }
       } else {
         // No valid OIDC user, clear state
         setCurrentUser(null);
         setCurrentSpace(null);
+        setUserSpaces([]);
+        localStorage.removeItem(SELECTED_SPACE_KEY);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load user');
       console.error('Error loading user:', err);
       setCurrentUser(null);
       setCurrentSpace(null);
+      setUserSpaces([]);
     } finally {
       setLoading(false);
     }
   };
 
   const switchSpace = async (spaceId: string) => {
-    // In a real implementation, you'd fetch the space details
-    // For now, we'll just update the spaceId
-    if (currentSpace) {
-      setCurrentSpace({ ...currentSpace, spaceId });
+    const space = userSpaces.find(s => s.spaceId === spaceId);
+    if (space) {
+      setCurrentSpace(space);
+      localStorage.setItem(SELECTED_SPACE_KEY, spaceId);
+    } else {
+      throw new Error('Space not found');
+    }
+  };
+
+  const createSpace = async (name: string): Promise<Space> => {
+    try {
+      const newSpace = await apiService.createSpace({ name });
+      // Refresh spaces to include the new one
+      await refreshSpaces();
+      // Switch to the new space
+      await switchSpace(newSpace.spaceId);
+      return newSpace;
+    } catch (err) {
+      console.error('Error creating space:', err);
+      throw err;
     }
   };
 
@@ -94,10 +150,13 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
       value={{ 
         currentUser, 
         currentSpace, 
+        userSpaces,
         loading, 
         error, 
-        switchSpace, 
-        refreshUser 
+        switchSpace,
+        createSpace,
+        refreshUser,
+        refreshSpaces
       }}
     >
       {children}

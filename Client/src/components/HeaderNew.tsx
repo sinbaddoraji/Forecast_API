@@ -1,6 +1,7 @@
 import { type FC, type Dispatch, type SetStateAction } from 'react';
 import { Menu, Eye, EyeOff, Bell } from 'lucide-react';
 import { useSpace } from '../contexts/SpaceContext';
+import { SpaceSelector } from './SpaceSelector';
 
 interface HeaderNewProps {
   currentView: string;
@@ -23,7 +24,10 @@ export const HeaderNew: FC<HeaderNewProps> = ({
         <button onClick={() => setSidebarOpen(true)} className="md:hidden text-gray-600">
           <Menu size={24} />
         </button>
-        <h2 className="text-lg font-semibold text-gray-800 capitalize">{currentView}</h2>
+        <div className="flex items-center space-x-4">
+          <h2 className="text-lg font-semibold text-gray-800 capitalize">{currentView}</h2>
+          <SpaceSelector />
+        </div>
         <div className="flex items-center space-x-4">
           <button
             onClick={onToggleBalances}

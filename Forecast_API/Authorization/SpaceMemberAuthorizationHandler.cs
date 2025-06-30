@@ -37,6 +37,9 @@ public class SpaceMemberAuthorizationHandler : AuthorizationHandler<SpaceMemberR
         {
             var user = await userService.GetOrCreateUserAsync(context.User);
             
+            _logger.LogInformation("Checking authorization for user {UserId} ({Email}) on space {SpaceId}", 
+                user.UserId, user.Email, spaceId);
+            
             var isMember = await dbContext.SpaceMembers
                 .AnyAsync(sm => sm.SpaceId == spaceId && sm.UserId == user.UserId);
 
@@ -47,7 +50,14 @@ public class SpaceMemberAuthorizationHandler : AuthorizationHandler<SpaceMemberR
             }
             else
             {
-                _logger.LogWarning("User {UserId} is not a member of space {SpaceId}", user.UserId, spaceId);
+                // Log more details about the failure
+                var userSpaces = await dbContext.SpaceMembers
+                    .Where(sm => sm.UserId == user.UserId)
+                    .Select(sm => sm.SpaceId)
+                    .ToListAsync();
+                
+                _logger.LogWarning("User {UserId} is not a member of space {SpaceId}. User is member of spaces: {UserSpaces}", 
+                    user.UserId, spaceId, string.Join(", ", userSpaces));
             }
         }
         catch (Exception ex)

@@ -1,6 +1,6 @@
 import { AuthService } from '../AuthService';
 import type { 
-  User, Account, Category, Expense, 
+  User, Space, SpaceMember, Account, Category, Expense, 
   Income, Budget, SavingsGoal 
 } from '../types/api';
 
@@ -36,6 +36,83 @@ class ApiService {
       method: 'POST',
     });
     return response.json();
+  }
+
+  // Space endpoints  
+  async getUserSpaces(): Promise<Space[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces`);
+    const spacesData = await response.json();
+    
+    // Transform the backend response to match our Space interface
+    return spacesData.map((space: any) => ({
+      spaceId: space.spaceId,
+      name: space.name,
+      ownerId: space.ownerId,
+      createdAt: new Date(space.createdAt),
+      updatedAt: new Date(space.updatedAt)
+    }));
+  }
+
+  async getSpace(spaceId: string): Promise<Space> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}`);
+    return response.json();
+  }
+
+  async createSpace(space: Omit<Space, 'spaceId' | 'ownerId' | 'createdAt' | 'updatedAt'>): Promise<Space> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces`, {
+      method: 'POST',
+      body: JSON.stringify({ name: space.name }),
+    });
+    const createdSpace = await response.json();
+    
+    // Transform the response to match our Space interface
+    return {
+      spaceId: createdSpace.spaceId,
+      name: createdSpace.name,
+      ownerId: createdSpace.ownerId,
+      createdAt: new Date(createdSpace.createdAt),
+      updatedAt: new Date(createdSpace.updatedAt)
+    };
+  }
+
+  async updateSpace(spaceId: string, space: Partial<Space>): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(space),
+    });
+  }
+
+  async deleteSpace(spaceId: string): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Space member endpoints
+  async getSpaceMembers(spaceId: string): Promise<SpaceMember[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/members`);
+    return response.json();
+  }
+
+  async addSpaceMember(spaceId: string, email: string, role: 'Member' | 'Owner'): Promise<SpaceMember> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ email, role }),
+    });
+    return response.json();
+  }
+
+  async updateSpaceMember(spaceId: string, userId: string, role: 'Member' | 'Owner'): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/members/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async removeSpaceMember(spaceId: string, userId: string): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/members/${userId}`, {
+      method: 'DELETE',
+    });
   }
 
   // Account endpoints
