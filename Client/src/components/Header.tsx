@@ -51,7 +51,7 @@ export const Header: FC<HeaderProps> = ({
               aria-label="Toggle user menu"
             >
               <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                <User className="h-4 w-4 text-gray-600" />
+                <User className="h-4 w-4 text-gray-600" aria-hidden="true" />
               </div>
               <div className="hidden lg:block text-left">
                 <p className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
