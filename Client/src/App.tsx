@@ -4,7 +4,7 @@ import { SpaceProvider } from './contexts/SpaceContext';
 import ProtectedRoute from './ProtectedRoute';
 import SigninCallback from './SigninCallback';
 import SignoutCallback from './SignoutCallback';
-import BudgetingPWANew from './components/BudgetingPWANew';
+import BudgetingPWA from './components/BudgetingPWA';
 import { SpaceGuard } from './components/SpaceGuard';
 import Login from './components/Login';
 
@@ -32,7 +32,7 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <SpaceGuard>
-                                        <BudgetingPWANew />
+                                        <BudgetingPWA />
                                     </SpaceGuard>
                                 </ProtectedRoute>
                             }

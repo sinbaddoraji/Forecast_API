@@ -57,17 +57,17 @@ export const SpaceSelector: React.FC = () => {
 
   return (
     <>
-      <div className="relative">
+      <div className="relative w-full sm:w-auto">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
         >
-          <span className="font-medium">{currentSpace.name}</span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <span className="font-medium truncate">{currentSpace.name}</span>
+          <ChevronDown className={`w-4 h-4 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isOpen && (
-          <div className="absolute top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <div className="absolute left-0 sm:left-auto right-0 sm:right-auto top-full mt-2 w-full sm:w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
             <div className="p-2">
               <div className="text-xs text-gray-500 px-3 py-1 uppercase tracking-wide">Spaces</div>
               {userSpaces.map((space) => (
