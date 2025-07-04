@@ -48,6 +48,7 @@ export const Header: FC<HeaderProps> = ({
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 sm:p-2"
+              aria-label="Toggle user menu"
             >
               <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
                 <User className="h-4 w-4 text-gray-600" />
