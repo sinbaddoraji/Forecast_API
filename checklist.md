@@ -38,14 +38,14 @@
 ### Core Feature Endpoints (CRUD)
 
 #### Accounts Management
-- [ ] Create Acc ountsController
-- [ ] Implement GET /api/spaces/{spaceId}/accounts - List all accounts in a space
-- [ ] Implement GET /api/spaces/{spaceId}/accounts/{accountId} - Get specific account details
-- [ ] Implement POST /api/spaces/{spaceId}/accounts - Create new account
-- [ ] Implement PUT /api/spaces/{spaceId}/accounts/{accountId} - Update account details
-- [ ] Implement DELETE /api/spaces/{spaceId}/accounts/{accountId} - Delete account
-- [ ] Implement GET /api/spaces/{spaceId}/accounts/{accountId}/balance - Get current balance
-- [ ] Implement GET /api/spaces/{spaceId}/accounts/{accountId}/transactions - Get account transaction history
+- [x] Create AccountsController
+- [x] Implement GET /api/spaces/{spaceId}/accounts - List all accounts in a space
+- [x] Implement GET /api/spaces/{spaceId}/accounts/{accountId} - Get specific account details
+- [x] Implement POST /api/spaces/{spaceId}/accounts - Create new account
+- [x] Implement PUT /api/spaces/{spaceId}/accounts/{accountId} - Update account details
+- [x] Implement DELETE /api/spaces/{spaceId}/accounts/{accountId} - Delete account
+- [x] Implement GET /api/spaces/{spaceId}/accounts/{accountId}/balance - Get current balance
+- [x] Implement GET /api/spaces/{spaceId}/accounts/{accountId}/transactions - Get account transaction history
 
 #### Expenses Management
 - [ ] Create ExpensesController
@@ -164,14 +164,14 @@
 - [x] Implement SpaceContext for space state management
 - [x] Create SpaceSelector component for switching between spaces
 - [x] Build API service layer with comprehensive endpoints for user/space management
-- [ ] Extend API service layer for financial endpoints (accounts, expenses, incomes, budgets, goals)
+- [x] Extend API service layer for financial endpoints (accounts, expenses, incomes, budgets, goals)
 
 #### Financial Management Pages
-- [ ] Build "Wallet/Accounts" page for account management
-  - [ ] List all accounts with balances
-  - [ ] Create/edit/delete accounts
-  - [ ] Account details view with transaction history
-  - [ ] Account balance tracking and updates
+- [x] Build "Wallet/Accounts" page for account management
+  - [x] List all accounts with balances
+  - [x] Create/edit/delete accounts
+  - [x] Account details view with transaction history
+  - [x] Account balance tracking and updates
 - [ ] Build "Expenses" page for expense tracking
   - [ ] Add new expense form with category and account selection
   - [ ] List expenses with filtering and search
@@ -275,7 +275,7 @@
 - [x] Space creation, management, and collaboration
 - [x] User search and space member management
 - [x] Activity dashboard and user insights
-- [ ] Wallet/Account management
+- [x] Wallet/Account management
 - [ ] Expense & Income tracking
 - [ ] Budget management with visual feedback
 - [ ] Savings goals with progress tracking
