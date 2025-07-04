@@ -1,5 +1,5 @@
 import { type FC, type Dispatch, type SetStateAction, useState } from 'react';
-import { Menu, Eye, EyeOff, Bell, User, Settings, BarChart3 } from 'lucide-react';
+import { Menu, Eye, EyeOff, User, Settings, BarChart3 } from 'lucide-react';
 import { useSpace } from '../contexts/SpaceContext';
 import { SpaceSelector } from './SpaceSelector';
 import UserProfile from './UserProfile';
@@ -44,21 +44,14 @@ export const Header: FC<HeaderProps> = ({
           >
             {showBalances ? <Eye size={18} className="sm:w-5 sm:h-5" /> : <EyeOff size={18} className="sm:w-5 sm:h-5" />}
           </button>
-          <button className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100 relative">
-            <Bell size={18} className="sm:w-5 sm:h-5" />
-            <span className="absolute top-0.5 right-0.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-          </button>
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-1.5 sm:p-2"
+              aria-label="Toggle user menu"
             >
-              <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
-                <img 
-                  className="h-full w-full object-cover" 
-                  src={`https://i.pravatar.cc/150?u=${currentUser?.email || 'default'}`} 
-                  alt="User"
-                />
+              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                <User className="h-4 w-4 text-gray-600" aria-hidden="true" />
               </div>
               <div className="hidden lg:block text-left">
                 <p className="text-sm font-medium text-gray-800 truncate max-w-[150px]">
