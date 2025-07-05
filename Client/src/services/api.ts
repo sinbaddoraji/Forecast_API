@@ -761,6 +761,317 @@ class ApiService {
     });
     return response.json();
   }
+
+  // Analytics endpoints
+  async getSpendingTrends(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+    period?: string;
+    categoryId?: string;
+    accountId?: string;
+  }): Promise<Array<{ date: string; amount: number }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/spending-trends`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      if (filter.period) params.append('period', filter.period);
+      if (filter.categoryId) params.append('categoryId', filter.categoryId);
+      if (filter.accountId) params.append('accountId', filter.accountId);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getIncomeTrends(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+    period?: string;
+    categoryId?: string;
+    accountId?: string;
+  }): Promise<Array<{ date: string; amount: number }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/income-trends`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      if (filter.period) params.append('period', filter.period);
+      if (filter.categoryId) params.append('categoryId', filter.categoryId);
+      if (filter.accountId) params.append('accountId', filter.accountId);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getCashFlow(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+    period?: string;
+  }): Promise<Array<{ date: string; income: number; expenses: number; netFlow: number }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/cash-flow`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      if (filter.period) params.append('period', filter.period);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getCategoryBreakdown(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Array<{
+    categoryId: string;
+    categoryName: string;
+    categoryColor: string;
+    amount: number;
+    percentage: number;
+  }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/category-breakdown`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getMonthlySummary(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Array<{
+    year: number;
+    month: number;
+    totalIncome: number;
+    totalExpenses: number;
+    netIncome: number;
+    savingsRate: number;
+    topCategories: Array<{
+      categoryId: string;
+      categoryName: string;
+      categoryColor: string;
+      amount: number;
+      percentage: number;
+    }>;
+  }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/monthly-summary`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getBudgetPerformance(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Array<{
+    budgetId: string;
+    categoryId: string;
+    categoryName: string;
+    budgetAmount: number;
+    actualSpent: number;
+    remaining: number;
+    percentageUsed: number;
+    isOverBudget: boolean;
+    startDate: string;
+    endDate: string;
+  }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/budget-performance`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getNetWorth(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Array<{
+    date: string;
+    totalAssets: number;
+    totalLiabilities: number;
+    netWorth: number;
+  }>> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/net-worth`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getFinancialProjections(spaceId: string): Promise<Array<{
+    date: string;
+    projectedIncome: number;
+    projectedExpenses: number;
+    projectedSavings: number;
+    projectedNetWorth: number;
+  }>> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/analytics/projections`);
+    return response.json();
+  }
+
+  // Import/Export endpoints
+  async importCsv(spaceId: string, file: File, options?: {
+    skipFirstRow?: boolean;
+    dateFormat?: string;
+    columnMapping?: {
+      dateColumn: number;
+      descriptionColumn: number;
+      amountColumn: number;
+      categoryColumn: number;
+      accountColumn?: number;
+      notesColumn?: number;
+    };
+  }): Promise<{
+    totalRows: number;
+    successfulImports: number;
+    failedImports: number;
+    errors: string[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    if (options?.skipFirstRow !== undefined) {
+      formData.append('skipFirstRow', options.skipFirstRow.toString());
+    }
+    
+    if (options?.dateFormat) {
+      formData.append('dateFormat', options.dateFormat);
+    }
+    
+    if (options?.columnMapping) {
+      Object.entries(options.columnMapping).forEach(([key, value]) => {
+        if (value !== undefined) {
+          formData.append(`columnMapping.${key}`, value.toString());
+        }
+      });
+    }
+
+    const token = await AuthService.getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/spaces/${spaceId}/importexport/import/csv`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Import failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async exportCsv(spaceId: string, filter?: {
+    startDate?: Date;
+    endDate?: Date;
+    categoryId?: string;
+    accountId?: string;
+    exportType?: string;
+  }): Promise<Blob> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/importexport/export/csv`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      if (filter.categoryId) params.append('categoryId', filter.categoryId);
+      if (filter.accountId) params.append('accountId', filter.accountId);
+      if (filter.exportType) params.append('exportType', filter.exportType);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.blob();
+  }
+
+  async exportPdfReport(spaceId: string, options?: {
+    startDate?: Date;
+    endDate?: Date;
+    title?: string;
+    includeCharts?: boolean;
+    includeBudgetAnalysis?: boolean;
+    includeCategoryBreakdown?: boolean;
+    includeNetWorthAnalysis?: boolean;
+  }): Promise<Blob> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/importexport/export/pdf-report`;
+    
+    if (options) {
+      const params = new URLSearchParams();
+      if (options.startDate) params.append('startDate', options.startDate.toISOString());
+      if (options.endDate) params.append('endDate', options.endDate.toISOString());
+      if (options.title) params.append('title', options.title);
+      if (options.includeCharts !== undefined) params.append('includeCharts', options.includeCharts.toString());
+      if (options.includeBudgetAnalysis !== undefined) params.append('includeBudgetAnalysis', options.includeBudgetAnalysis.toString());
+      if (options.includeCategoryBreakdown !== undefined) params.append('includeCategoryBreakdown', options.includeCategoryBreakdown.toString());
+      if (options.includeNetWorthAnalysis !== undefined) params.append('includeNetWorthAnalysis', options.includeNetWorthAnalysis.toString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.blob();
+  }
 }
 
 export const apiService = new ApiService();
