@@ -71,6 +71,7 @@ export const IncomeCard: React.FC<IncomeCardProps> = ({ income, onEdit, onDelete
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100"
                     disabled={isDeleting}
+                    aria-label="More options"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
