@@ -1,14 +1,163 @@
 import { AuthService } from '../AuthService';
 import type { 
-  User, Space, SpaceMember, Account, Category,
+  User, Space, SpaceMember, Account,
   Income, Budget, SavingsGoal, ExpenseResponseDto,
   CreateExpenseDto, UpdateExpenseDto, ExpenseFilterDto,
   CategoryResponseDto, CreateCategoryDto, UpdateCategoryDto,
-  CategoryUsageStatsDto, IncomeResponseDto, CreateIncomeDto,
+  CategoryUsageStatsDto, CreateIncomeDto,
   UpdateIncomeDto, IncomeFilterDto
 } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5128/api';
+
+// Utility functions for data transformation and URL building
+class ApiHelpers {
+  static transformPascalToCamel<T>(obj: any): T {
+    if (!obj || typeof obj !== 'object') return obj;
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.transformPascalToCamel(item)) as T;
+    }
+    
+    const transformed: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      transformed[camelKey] = value;
+    }
+    return transformed as T;
+  }
+
+  static transformSpace(space: any): Space {
+    return {
+      spaceId: space.SpaceId || space.spaceId,
+      name: space.Name || space.name,
+      ownerId: space.OwnerId || space.ownerId,
+      createdAt: new Date(space.CreatedAt || space.createdAt),
+      updatedAt: new Date(space.UpdatedAt || space.updatedAt)
+    };
+  }
+
+  static transformAccount(account: any): Account {
+    return {
+      accountId: account.AccountId || account.accountId,
+      spaceId: account.SpaceId || account.spaceId,
+      name: account.Name || account.name,
+      type: account.Type || account.type,
+      startingBalance: account.StartingBalance || account.startingBalance,
+      currentBalance: account.CurrentBalance || account.currentBalance,
+      createdAt: new Date(account.CreatedAt || account.createdAt),
+      updatedAt: new Date(account.UpdatedAt || account.updatedAt)
+    };
+  }
+
+  static transformCategoryResponse(category: any): CategoryResponseDto {
+    return {
+      categoryId: category.categoryId,
+      spaceId: category.spaceId,
+      name: category.name,
+      color: category.color,
+      createdAt: new Date(category.createdAt),
+      updatedAt: new Date(category.updatedAt),
+      expenseCount: category.expenseCount || 0,
+      totalExpenses: category.totalExpenses || 0,
+      hasBudgets: category.hasBudgets || false
+    };
+  }
+
+  static transformExpenseResponse(expense: any): ExpenseResponseDto {
+    return {
+      expenseId: expense.expenseId,
+      spaceId: expense.spaceId,
+      accountId: expense.accountId,
+      accountName: expense.accountName,
+      title: expense.title,
+      amount: expense.amount,
+      date: new Date(expense.date),
+      addedByUserId: expense.addedByUserId,
+      addedByUserName: expense.addedByUserName,
+      categoryId: expense.categoryId,
+      categoryName: expense.categoryName,
+      notes: expense.notes,
+      createdAt: new Date(expense.createdAt),
+      updatedAt: new Date(expense.updatedAt)
+    };
+  }
+
+  static transformIncome(income: any): Income {
+    return {
+      incomeId: income.incomeId,
+      spaceId: income.spaceId,
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: new Date(income.date),
+      addedByUserId: income.addedByUserId,
+      notes: income.notes,
+      createdAt: new Date(income.createdAt),
+      updatedAt: new Date(income.updatedAt),
+      account: income.account,
+      addedByUser: income.addedByUser
+    };
+  }
+
+  static buildUrlWithParams(baseUrl: string, params: Record<string, any>): string {
+    const urlParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (value instanceof Date) {
+          urlParams.append(key, value.toISOString());
+        } else {
+          urlParams.append(key, value.toString());
+        }
+      }
+    });
+    
+    return urlParams.toString() ? `${baseUrl}?${urlParams.toString()}` : baseUrl;
+  }
+
+  static createExpenseDto(expense: CreateExpenseDto) {
+    return {
+      accountId: expense.accountId,
+      title: expense.title,
+      amount: expense.amount,
+      date: expense.date.toISOString(),
+      categoryId: expense.categoryId,
+      notes: expense.notes
+    };
+  }
+
+  static createIncomeDto(income: CreateIncomeDto) {
+    return {
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: income.date.toISOString(),
+      notes: income.notes
+    };
+  }
+
+  static updateExpenseDto(expense: UpdateExpenseDto) {
+    return {
+      accountId: expense.accountId,
+      title: expense.title,
+      amount: expense.amount,
+      date: expense.date.toISOString(),
+      categoryId: expense.categoryId,
+      notes: expense.notes
+    };
+  }
+
+  static updateIncomeDto(income: UpdateIncomeDto) {
+    return {
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: income.date.toISOString(),
+      notes: income.notes
+    };
+  }
+}
 
 class ApiService {
   private async fetchWithAuth(url: string, options: RequestInit = {}) {
@@ -90,29 +239,13 @@ class ApiService {
   async getUserSpaces(): Promise<Space[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces`);
     const spacesData = await response.json();
-    
-    // Transform the backend response to match our Space interface (backend uses PascalCase)
-    return spacesData.map((space: any) => ({
-      spaceId: space.SpaceId || space.spaceId,
-      name: space.Name || space.name,
-      ownerId: space.OwnerId || space.ownerId,
-      createdAt: new Date(space.CreatedAt || space.createdAt),
-      updatedAt: new Date(space.UpdatedAt || space.updatedAt)
-    }));
+    return spacesData.map(ApiHelpers.transformSpace);
   }
 
   async getSpace(spaceId: string): Promise<Space> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}`);
     const spaceData = await response.json();
-    
-    // Transform the response to match our Space interface (backend uses PascalCase)
-    return {
-      spaceId: spaceData.SpaceId || spaceData.spaceId,
-      name: spaceData.Name || spaceData.name,
-      ownerId: spaceData.OwnerId || spaceData.ownerId,
-      createdAt: new Date(spaceData.CreatedAt || spaceData.createdAt),
-      updatedAt: new Date(spaceData.UpdatedAt || spaceData.updatedAt)
-    };
+    return ApiHelpers.transformSpace(spaceData);
   }
 
   async createSpace(space: Omit<Space, 'spaceId' | 'ownerId' | 'createdAt' | 'updatedAt'>): Promise<Space> {
@@ -121,15 +254,7 @@ class ApiService {
       body: JSON.stringify({ name: space.name }),
     });
     const createdSpace = await response.json();
-    
-    // Transform the response to match our Space interface (backend uses PascalCase)
-    return {
-      spaceId: createdSpace.SpaceId || createdSpace.spaceId,
-      name: createdSpace.Name || createdSpace.name,
-      ownerId: createdSpace.OwnerId || createdSpace.ownerId,
-      createdAt: new Date(createdSpace.CreatedAt || createdSpace.createdAt),
-      updatedAt: new Date(createdSpace.UpdatedAt || createdSpace.updatedAt)
-    };
+    return ApiHelpers.transformSpace(createdSpace);
   }
 
   async updateSpace(spaceId: string, space: Partial<Space>): Promise<void> {
@@ -176,35 +301,13 @@ class ApiService {
   async getAccounts(spaceId: string): Promise<Account[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts`);
     const accountsData = await response.json();
-    
-    // Transform the backend response to match our Account interface (backend uses PascalCase)
-    return accountsData.map((account: any) => ({
-      accountId: account.AccountId || account.accountId,
-      spaceId: account.SpaceId || account.spaceId,
-      name: account.Name || account.name,
-      type: account.Type || account.type,
-      startingBalance: account.StartingBalance || account.startingBalance,
-      currentBalance: account.CurrentBalance || account.currentBalance,
-      createdAt: new Date(account.CreatedAt || account.createdAt),
-      updatedAt: new Date(account.UpdatedAt || account.updatedAt)
-    }));
+    return accountsData.map(ApiHelpers.transformAccount);
   }
 
   async getAccount(spaceId: string, accountId: string): Promise<Account> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/accounts/${accountId}`);
     const accountData = await response.json();
-    
-    // Transform the response to match our Account interface (backend uses PascalCase)
-    return {
-      accountId: accountData.AccountId || accountData.accountId,
-      spaceId: accountData.SpaceId || accountData.spaceId,
-      name: accountData.Name || accountData.name,
-      type: accountData.Type || accountData.type,
-      startingBalance: accountData.StartingBalance || accountData.startingBalance,
-      currentBalance: accountData.CurrentBalance || accountData.currentBalance,
-      createdAt: new Date(accountData.CreatedAt || accountData.createdAt),
-      updatedAt: new Date(accountData.UpdatedAt || accountData.updatedAt)
-    };
+    return ApiHelpers.transformAccount(accountData);
   }
 
   async createAccount(spaceId: string, account: Omit<Account, 'accountId' | 'spaceId' | 'createdAt' | 'updatedAt'>): Promise<Account> {
@@ -218,18 +321,7 @@ class ApiService {
       body: JSON.stringify(createDto),
     });
     const createdAccount = await response.json();
-    
-    // Transform the response to match our Account interface (backend uses PascalCase)
-    return {
-      accountId: createdAccount.AccountId || createdAccount.accountId,
-      spaceId: createdAccount.SpaceId || createdAccount.spaceId,
-      name: createdAccount.Name || createdAccount.name,
-      type: createdAccount.Type || createdAccount.type,
-      startingBalance: createdAccount.StartingBalance || createdAccount.startingBalance,
-      currentBalance: createdAccount.CurrentBalance || createdAccount.currentBalance,
-      createdAt: new Date(createdAccount.CreatedAt || createdAccount.createdAt),
-      updatedAt: new Date(createdAccount.UpdatedAt || createdAccount.updatedAt)
-    };
+    return ApiHelpers.transformAccount(createdAccount);
   }
 
   async updateAccount(spaceId: string, account: Account): Promise<void> {
@@ -286,35 +378,13 @@ class ApiService {
   async getCategories(spaceId: string): Promise<CategoryResponseDto[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories`);
     const categoriesData = await response.json();
-    
-    return categoriesData.map((category: any) => ({
-      categoryId: category.categoryId,
-      spaceId: category.spaceId,
-      name: category.name,
-      color: category.color,
-      createdAt: new Date(category.createdAt),
-      updatedAt: new Date(category.updatedAt),
-      expenseCount: category.expenseCount || 0,
-      totalExpenses: category.totalExpenses || 0,
-      hasBudgets: category.hasBudgets || false
-    }));
+    return categoriesData.map(ApiHelpers.transformCategoryResponse);
   }
 
   async getCategory(spaceId: string, categoryId: string): Promise<CategoryResponseDto> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories/${categoryId}`);
     const category = await response.json();
-    
-    return {
-      categoryId: category.categoryId,
-      spaceId: category.spaceId,
-      name: category.name,
-      color: category.color,
-      createdAt: new Date(category.createdAt),
-      updatedAt: new Date(category.updatedAt),
-      expenseCount: category.expenseCount || 0,
-      totalExpenses: category.totalExpenses || 0,
-      hasBudgets: category.hasBudgets || false
-    };
+    return ApiHelpers.transformCategoryResponse(category);
   }
 
   async createCategory(spaceId: string, category: CreateCategoryDto): Promise<CategoryResponseDto> {
@@ -323,18 +393,7 @@ class ApiService {
       body: JSON.stringify(category),
     });
     const createdCategory = await response.json();
-    
-    return {
-      categoryId: createdCategory.categoryId,
-      spaceId: createdCategory.spaceId,
-      name: createdCategory.name,
-      color: createdCategory.color,
-      createdAt: new Date(createdCategory.createdAt),
-      updatedAt: new Date(createdCategory.updatedAt),
-      expenseCount: createdCategory.expenseCount || 0,
-      totalExpenses: createdCategory.totalExpenses || 0,
-      hasBudgets: createdCategory.hasBudgets || false
-    };
+    return ApiHelpers.transformCategoryResponse(createdCategory);
   }
 
   async updateCategory(spaceId: string, categoryId: string, category: UpdateCategoryDto): Promise<void> {
@@ -351,15 +410,8 @@ class ApiService {
   }
 
   async getCategoryUsageStats(spaceId: string, startDate?: Date, endDate?: Date): Promise<CategoryUsageStatsDto[]> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/categories/usage-stats`;
-    
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate.toISOString());
-    if (endDate) params.append('endDate', endDate.toISOString());
-    
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/categories/usage-stats`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { startDate, endDate });
     
     const response = await this.fetchWithAuth(url);
     const statsData = await response.json();
@@ -378,84 +430,31 @@ class ApiService {
   }
 
   async getCategoryExpenseTotals(spaceId: string, startDate: Date, endDate: Date): Promise<Record<string, number>> {
-    const params = new URLSearchParams({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
-    });
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/categories/expense-totals`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { startDate, endDate });
     
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories/expense-totals?${params}`);
+    const response = await this.fetchWithAuth(url);
     return response.json();
   }
 
   // Expense endpoints
   async getExpenses(spaceId: string, filter?: ExpenseFilterDto): Promise<ExpenseResponseDto[]> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/expenses`;
-    
-    if (filter) {
-      const params = new URLSearchParams();
-      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
-      if (filter.categoryId) params.append('categoryId', filter.categoryId);
-      if (filter.accountId) params.append('accountId', filter.accountId);
-      if (filter.limit) params.append('limit', filter.limit.toString());
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/expenses`;
+    const url = filter ? ApiHelpers.buildUrlWithParams(baseUrl, filter) : baseUrl;
     
     const response = await this.fetchWithAuth(url);
     const expensesData = await response.json();
-    
-    return expensesData.map((expense: any) => ({
-      expenseId: expense.expenseId,
-      spaceId: expense.spaceId,
-      accountId: expense.accountId,
-      accountName: expense.accountName,
-      title: expense.title,
-      amount: expense.amount,
-      date: new Date(expense.date),
-      addedByUserId: expense.addedByUserId,
-      addedByUserName: expense.addedByUserName,
-      categoryId: expense.categoryId,
-      categoryName: expense.categoryName,
-      notes: expense.notes,
-      createdAt: new Date(expense.createdAt),
-      updatedAt: new Date(expense.updatedAt)
-    }));
+    return expensesData.map(ApiHelpers.transformExpenseResponse);
   }
 
   async getExpense(spaceId: string, expenseId: string): Promise<ExpenseResponseDto> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/${expenseId}`);
     const expense = await response.json();
-    
-    return {
-      expenseId: expense.expenseId,
-      spaceId: expense.spaceId,
-      accountId: expense.accountId,
-      accountName: expense.accountName,
-      title: expense.title,
-      amount: expense.amount,
-      date: new Date(expense.date),
-      addedByUserId: expense.addedByUserId,
-      addedByUserName: expense.addedByUserName,
-      categoryId: expense.categoryId,
-      categoryName: expense.categoryName,
-      notes: expense.notes,
-      createdAt: new Date(expense.createdAt),
-      updatedAt: new Date(expense.updatedAt)
-    };
+    return ApiHelpers.transformExpenseResponse(expense);
   }
 
   async createExpense(spaceId: string, expense: CreateExpenseDto): Promise<ExpenseResponseDto> {
-    const createDto = {
-      accountId: expense.accountId,
-      title: expense.title,
-      amount: expense.amount,
-      date: expense.date.toISOString(),
-      categoryId: expense.categoryId,
-      notes: expense.notes
-    };
+    const createDto = ApiHelpers.createExpenseDto(expense);
     
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses`, {
       method: 'POST',
@@ -463,33 +462,11 @@ class ApiService {
     });
     
     const createdExpense = await response.json();
-    return {
-      expenseId: createdExpense.expenseId,
-      spaceId: createdExpense.spaceId,
-      accountId: createdExpense.accountId,
-      accountName: createdExpense.accountName,
-      title: createdExpense.title,
-      amount: createdExpense.amount,
-      date: new Date(createdExpense.date),
-      addedByUserId: createdExpense.addedByUserId,
-      addedByUserName: createdExpense.addedByUserName,
-      categoryId: createdExpense.categoryId,
-      categoryName: createdExpense.categoryName,
-      notes: createdExpense.notes,
-      createdAt: new Date(createdExpense.createdAt),
-      updatedAt: new Date(createdExpense.updatedAt)
-    };
+    return ApiHelpers.transformExpenseResponse(createdExpense);
   }
 
   async updateExpense(spaceId: string, expenseId: string, expense: UpdateExpenseDto): Promise<void> {
-    const updateDto = {
-      accountId: expense.accountId,
-      title: expense.title,
-      amount: expense.amount,
-      date: expense.date.toISOString(),
-      categoryId: expense.categoryId,
-      notes: expense.notes
-    };
+    const updateDto = ApiHelpers.updateExpenseDto(expense);
     
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/${expenseId}`, {
       method: 'PUT',
@@ -504,112 +481,48 @@ class ApiService {
   }
 
   async getExpensesSummaryByCategory(spaceId: string, startDate: Date, endDate: Date): Promise<Record<string, number>> {
-    const params = new URLSearchParams({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
-    });
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/expenses/summary/by-category`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { startDate, endDate });
     
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/summary/by-category?${params}`);
+    const response = await this.fetchWithAuth(url);
     return response.json();
   }
 
   async getTotalExpenses(spaceId: string, startDate: Date, endDate: Date): Promise<number> {
-    const params = new URLSearchParams({
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
-    });
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/expenses/total`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { startDate, endDate });
     
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/total?${params}`);
+    const response = await this.fetchWithAuth(url);
     return response.json();
   }
 
   async getRecentExpenses(spaceId: string, count: number = 10): Promise<ExpenseResponseDto[]> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/recent?count=${count}`);
-    const expensesData = await response.json();
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/expenses/recent`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { count });
     
-    return expensesData.map((expense: any) => ({
-      expenseId: expense.expenseId,
-      spaceId: expense.spaceId,
-      accountId: expense.accountId,
-      accountName: expense.accountName,
-      title: expense.title,
-      amount: expense.amount,
-      date: new Date(expense.date),
-      addedByUserId: expense.addedByUserId,
-      addedByUserName: expense.addedByUserName,
-      categoryId: expense.categoryId,
-      categoryName: expense.categoryName,
-      notes: expense.notes,
-      createdAt: new Date(expense.createdAt),
-      updatedAt: new Date(expense.updatedAt)
-    }));
+    const response = await this.fetchWithAuth(url);
+    const expensesData = await response.json();
+    return expensesData.map(ApiHelpers.transformExpenseResponse);
   }
 
   // Income endpoints
   async getIncomes(spaceId: string, filter?: IncomeFilterDto): Promise<Income[]> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/incomes`;
-    
-    if (filter) {
-      const params = new URLSearchParams();
-      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
-      if (filter.accountId) params.append('accountId', filter.accountId);
-      if (filter.search) params.append('search', filter.search);
-      if (filter.page) params.append('page', filter.page.toString());
-      if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/incomes`;
+    const url = filter ? ApiHelpers.buildUrlWithParams(baseUrl, filter) : baseUrl;
     
     const response = await this.fetchWithAuth(url);
     const incomesData = await response.json();
-    
-    return incomesData.map((income: any) => ({
-      incomeId: income.incomeId,
-      spaceId: income.spaceId,
-      accountId: income.accountId,
-      title: income.title,
-      amount: income.amount,
-      date: new Date(income.date),
-      addedByUserId: income.addedByUserId,
-      notes: income.notes,
-      createdAt: new Date(income.createdAt),
-      updatedAt: new Date(income.updatedAt),
-      account: income.account,
-      addedByUser: income.addedByUser
-    }));
+    return incomesData.map(ApiHelpers.transformIncome);
   }
 
   async getIncome(spaceId: string, incomeId: string): Promise<Income> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/${incomeId}`);
     const income = await response.json();
-    
-    return {
-      incomeId: income.incomeId,
-      spaceId: income.spaceId,
-      accountId: income.accountId,
-      title: income.title,
-      amount: income.amount,
-      date: new Date(income.date),
-      addedByUserId: income.addedByUserId,
-      notes: income.notes,
-      createdAt: new Date(income.createdAt),
-      updatedAt: new Date(income.updatedAt),
-      account: income.account,
-      addedByUser: income.addedByUser
-    };
+    return ApiHelpers.transformIncome(income);
   }
 
   async createIncome(spaceId: string, income: CreateIncomeDto): Promise<Income> {
-    const createDto = {
-      accountId: income.accountId,
-      title: income.title,
-      amount: income.amount,
-      date: income.date.toISOString(),
-      notes: income.notes
-    };
+    const createDto = ApiHelpers.createIncomeDto(income);
     
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes`, {
       method: 'POST',
@@ -617,30 +530,11 @@ class ApiService {
     });
     
     const createdIncome = await response.json();
-    return {
-      incomeId: createdIncome.incomeId,
-      spaceId: createdIncome.spaceId,
-      accountId: createdIncome.accountId,
-      title: createdIncome.title,
-      amount: createdIncome.amount,
-      date: new Date(createdIncome.date),
-      addedByUserId: createdIncome.addedByUserId,
-      notes: createdIncome.notes,
-      createdAt: new Date(createdIncome.createdAt),
-      updatedAt: new Date(createdIncome.updatedAt),
-      account: createdIncome.account,
-      addedByUser: createdIncome.addedByUser
-    };
+    return ApiHelpers.transformIncome(createdIncome);
   }
 
   async updateIncome(spaceId: string, incomeId: string, income: UpdateIncomeDto): Promise<void> {
-    const updateDto = {
-      accountId: income.accountId,
-      title: income.title,
-      amount: income.amount,
-      date: income.date.toISOString(),
-      notes: income.notes
-    };
+    const updateDto = ApiHelpers.updateIncomeDto(income);
     
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/${incomeId}`, {
       method: 'PUT',
@@ -655,39 +549,20 @@ class ApiService {
   }
 
   async getIncomeSummary(spaceId: string, startDate?: Date, endDate?: Date, period: string = 'monthly'): Promise<any> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/incomes/summary`;
-    
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate.toISOString());
-    if (endDate) params.append('endDate', endDate.toISOString());
-    if (period) params.append('period', period);
-    
-    if (params.toString()) {
-      url += `?${params.toString()}`;
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/incomes/summary`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { startDate, endDate, period });
     
     const response = await this.fetchWithAuth(url);
     return response.json();
   }
 
   async getRecentIncomes(spaceId: string, limit: number = 10): Promise<Income[]> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/recent?limit=${limit}`);
-    const incomesData = await response.json();
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/incomes/recent`;
+    const url = ApiHelpers.buildUrlWithParams(baseUrl, { limit });
     
-    return incomesData.map((income: any) => ({
-      incomeId: income.incomeId,
-      spaceId: income.spaceId,
-      accountId: income.accountId,
-      title: income.title,
-      amount: income.amount,
-      date: new Date(income.date),
-      addedByUserId: income.addedByUserId,
-      notes: income.notes,
-      createdAt: new Date(income.createdAt),
-      updatedAt: new Date(income.updatedAt),
-      account: income.account,
-      addedByUser: income.addedByUser
-    }));
+    const response = await this.fetchWithAuth(url);
+    const incomesData = await response.json();
+    return incomesData.map(ApiHelpers.transformIncome);
   }
 
   // Budget endpoints
@@ -770,20 +645,8 @@ class ApiService {
     categoryId?: string;
     accountId?: string;
   }): Promise<Array<{ date: string; amount: number }>> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/spending-trends`;
-    
-    if (filter) {
-      const params = new URLSearchParams();
-      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
-      if (filter.period) params.append('period', filter.period);
-      if (filter.categoryId) params.append('categoryId', filter.categoryId);
-      if (filter.accountId) params.append('accountId', filter.accountId);
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/analytics/spending-trends`;
+    const url = filter ? ApiHelpers.buildUrlWithParams(baseUrl, filter) : baseUrl;
     
     const response = await this.fetchWithAuth(url);
     return response.json();
@@ -796,20 +659,8 @@ class ApiService {
     categoryId?: string;
     accountId?: string;
   }): Promise<Array<{ date: string; amount: number }>> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/income-trends`;
-    
-    if (filter) {
-      const params = new URLSearchParams();
-      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
-      if (filter.period) params.append('period', filter.period);
-      if (filter.categoryId) params.append('categoryId', filter.categoryId);
-      if (filter.accountId) params.append('accountId', filter.accountId);
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/analytics/income-trends`;
+    const url = filter ? ApiHelpers.buildUrlWithParams(baseUrl, filter) : baseUrl;
     
     const response = await this.fetchWithAuth(url);
     return response.json();
@@ -820,18 +671,8 @@ class ApiService {
     endDate?: Date;
     period?: string;
   }): Promise<Array<{ date: string; income: number; expenses: number; netFlow: number }>> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/cash-flow`;
-    
-    if (filter) {
-      const params = new URLSearchParams();
-      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
-      if (filter.period) params.append('period', filter.period);
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/analytics/cash-flow`;
+    const url = filter ? ApiHelpers.buildUrlWithParams(baseUrl, filter) : baseUrl;
     
     const response = await this.fetchWithAuth(url);
     return response.json();
@@ -847,17 +688,8 @@ class ApiService {
     amount: number;
     percentage: number;
   }>> {
-    let url = `${API_BASE_URL}/spaces/${spaceId}/analytics/category-breakdown`;
-    
-    if (filter) {
-      const params = new URLSearchParams();
-      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
-      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
-      
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-    }
+    const baseUrl = `${API_BASE_URL}/spaces/${spaceId}/analytics/category-breakdown`;
+    const url = filter ? ApiHelpers.buildUrlWithParams(baseUrl, filter) : baseUrl;
     
     const response = await this.fetchWithAuth(url);
     return response.json();
