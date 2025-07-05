@@ -21,7 +21,7 @@ export const MobileNav: FC<MobileNavProps> = ({ state, dispatch, onAddClick }) =
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
       <div className="flex justify-around items-center">
-        {navItems.slice(0, 2).map(item => (
+        {navItems.slice(0, 3).map(item => (
             <button key={item.view} onClick={() => dispatch({ type: 'SET_VIEW', payload: item.view })} className={`flex-1 flex flex-col items-center py-2 ${state.currentView === item.view ? 'text-blue-600' : 'text-gray-600'}`}>
                 <item.icon size={22} />
                 <span className="text-xs mt-1">{item.label}</span>
@@ -32,7 +32,7 @@ export const MobileNav: FC<MobileNavProps> = ({ state, dispatch, onAddClick }) =
           <Plus size={24} />
         </button>
 
-        {navItems.slice(2, 6).map(item => (
+        {navItems.slice(3, 6).map(item => (
             <button key={item.view} onClick={() => dispatch({ type: 'SET_VIEW', payload: item.view })} className={`flex-1 flex flex-col items-center py-2 ${state.currentView === item.view ? 'text-blue-600' : 'text-gray-600'}`}>
                 <item.icon size={22} />
                 <span className="text-xs mt-1">{item.label}</span>
