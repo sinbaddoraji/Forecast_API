@@ -1,5 +1,5 @@
 import type { FC, Dispatch } from 'react';
-import { Home, Wallet, CreditCard, Target, PiggyBank, Plus, FolderOpen } from 'lucide-react';
+import { Home, Wallet, CreditCard, Target, PiggyBank, Plus, FolderOpen, DollarSign } from 'lucide-react';
 import type { AppState, AppAction } from '../types/budget';
 
 interface MobileNavProps {
@@ -13,6 +13,7 @@ export const MobileNav: FC<MobileNavProps> = ({ state, dispatch, onAddClick }) =
     { view: 'dashboard', label: 'Home', icon: Home },
     { view: 'accounts', label: 'Wallet', icon: Wallet },
     { view: 'expenses', label: 'Expenses', icon: CreditCard },
+    { view: 'income', label: 'Income', icon: DollarSign },
     { view: 'categories', label: 'Categories', icon: FolderOpen },
     { view: 'budgets', label: 'Budgets', icon: Target },
     { view: 'goals', label: 'Goals', icon: PiggyBank },
@@ -32,7 +33,7 @@ export const MobileNav: FC<MobileNavProps> = ({ state, dispatch, onAddClick }) =
           <Plus size={24} />
         </button>
 
-        {navItems.slice(2, 6).map(item => (
+        {navItems.slice(2, 7).map(item => (
             <button key={item.view} onClick={() => dispatch({ type: 'SET_VIEW', payload: item.view })} className={`flex-1 flex flex-col items-center py-2 ${state.currentView === item.view ? 'text-blue-600' : 'text-gray-600'}`}>
                 <item.icon size={22} />
                 <span className="text-xs mt-1">{item.label}</span>

@@ -8,6 +8,7 @@ import { Dashboard } from './Dashboard';
 import { AccountsView } from './AccountsView';
 import { TransactionsView } from './TransactionsView';
 import { ExpensesView } from './ExpensesView';
+import { IncomeView } from './IncomeView';
 import { CategoriesView } from './CategoriesView';
 import { BudgetsView } from './BudgetsView';
 import { GoalsView } from './GoalsView';
@@ -81,6 +82,8 @@ const BudgetingPWAContent: React.FC<BudgetingPWAContentProps> = ({
         return <TransactionsView onAddTransaction={() => setShowAddTransaction(true)} />;
       case 'expenses':
         return <ExpensesView />;
+      case 'income':
+        return <IncomeView />;
       case 'categories':
         return <CategoriesView />;
       case 'budgets':

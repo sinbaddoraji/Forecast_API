@@ -4,7 +4,8 @@ import type {
   Income, Budget, SavingsGoal, ExpenseResponseDto,
   CreateExpenseDto, UpdateExpenseDto, ExpenseFilterDto,
   CategoryResponseDto, CreateCategoryDto, UpdateCategoryDto,
-  CategoryUsageStatsDto
+  CategoryUsageStatsDto, IncomeResponseDto, CreateIncomeDto,
+  UpdateIncomeDto, IncomeFilterDto
 } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5128/api';
@@ -545,28 +546,105 @@ class ApiService {
   }
 
   // Income endpoints
-  async getIncomes(spaceId: string): Promise<Income[]> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes`);
-    return response.json();
+  async getIncomes(spaceId: string, filter?: IncomeFilterDto): Promise<Income[]> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/incomes`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      if (filter.accountId) params.append('accountId', filter.accountId);
+      if (filter.search) params.append('search', filter.search);
+      if (filter.page) params.append('page', filter.page.toString());
+      if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    const incomesData = await response.json();
+    
+    return incomesData.map((income: any) => ({
+      incomeId: income.incomeId,
+      spaceId: income.spaceId,
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: new Date(income.date),
+      addedByUserId: income.addedByUserId,
+      notes: income.notes,
+      createdAt: new Date(income.createdAt),
+      updatedAt: new Date(income.updatedAt),
+      account: income.account,
+      addedByUser: income.addedByUser
+    }));
   }
 
   async getIncome(spaceId: string, incomeId: string): Promise<Income> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/${incomeId}`);
-    return response.json();
+    const income = await response.json();
+    
+    return {
+      incomeId: income.incomeId,
+      spaceId: income.spaceId,
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: new Date(income.date),
+      addedByUserId: income.addedByUserId,
+      notes: income.notes,
+      createdAt: new Date(income.createdAt),
+      updatedAt: new Date(income.updatedAt),
+      account: income.account,
+      addedByUser: income.addedByUser
+    };
   }
 
-  async createIncome(spaceId: string, income: Omit<Income, 'incomeId' | 'spaceId' | 'addedByUserId'>): Promise<Income> {
+  async createIncome(spaceId: string, income: CreateIncomeDto): Promise<Income> {
+    const createDto = {
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: income.date.toISOString(),
+      notes: income.notes
+    };
+    
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes`, {
       method: 'POST',
-      body: JSON.stringify(income),
+      body: JSON.stringify(createDto),
     });
-    return response.json();
+    
+    const createdIncome = await response.json();
+    return {
+      incomeId: createdIncome.incomeId,
+      spaceId: createdIncome.spaceId,
+      accountId: createdIncome.accountId,
+      title: createdIncome.title,
+      amount: createdIncome.amount,
+      date: new Date(createdIncome.date),
+      addedByUserId: createdIncome.addedByUserId,
+      notes: createdIncome.notes,
+      createdAt: new Date(createdIncome.createdAt),
+      updatedAt: new Date(createdIncome.updatedAt),
+      account: createdIncome.account,
+      addedByUser: createdIncome.addedByUser
+    };
   }
 
-  async updateIncome(spaceId: string, income: Income): Promise<void> {
-    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/${income.incomeId}`, {
+  async updateIncome(spaceId: string, incomeId: string, income: UpdateIncomeDto): Promise<void> {
+    const updateDto = {
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: income.date.toISOString(),
+      notes: income.notes
+    };
+    
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/${incomeId}`, {
       method: 'PUT',
-      body: JSON.stringify(income),
+      body: JSON.stringify(updateDto),
     });
   }
 
@@ -574,6 +652,42 @@ class ApiService {
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/${incomeId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getIncomeSummary(spaceId: string, startDate?: Date, endDate?: Date, period: string = 'monthly'): Promise<any> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/incomes/summary`;
+    
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate.toISOString());
+    if (endDate) params.append('endDate', endDate.toISOString());
+    if (period) params.append('period', period);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  }
+
+  async getRecentIncomes(spaceId: string, limit: number = 10): Promise<Income[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/incomes/recent?limit=${limit}`);
+    const incomesData = await response.json();
+    
+    return incomesData.map((income: any) => ({
+      incomeId: income.incomeId,
+      spaceId: income.spaceId,
+      accountId: income.accountId,
+      title: income.title,
+      amount: income.amount,
+      date: new Date(income.date),
+      addedByUserId: income.addedByUserId,
+      notes: income.notes,
+      createdAt: new Date(income.createdAt),
+      updatedAt: new Date(income.updatedAt),
+      account: income.account,
+      addedByUser: income.addedByUser
+    }));
   }
 
   // Budget endpoints

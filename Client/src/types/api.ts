@@ -153,8 +153,51 @@ export interface Income {
   amount: number;
   date: Date;
   addedByUserId: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
   account?: Account;
   addedByUser?: User;
+}
+
+export interface IncomeResponseDto {
+  incomeId: string;
+  spaceId: string;
+  accountId: string;
+  accountName: string;
+  title: string;
+  amount: number;
+  date: Date;
+  addedByUserId: string;
+  addedByUserName: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateIncomeDto {
+  accountId: string;
+  title: string;
+  amount: number;
+  date: Date;
+  notes?: string;
+}
+
+export interface UpdateIncomeDto {
+  accountId: string;
+  title: string;
+  amount: number;
+  date: Date;
+  notes?: string;
+}
+
+export interface IncomeFilterDto {
+  startDate?: Date;
+  endDate?: Date;
+  accountId?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface Budget {

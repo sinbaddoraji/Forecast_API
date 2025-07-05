@@ -61,13 +61,13 @@
 
 #### Income Management
 - [x] Create IncomesController
-- [ ] Implement GET /api/spaces/{spaceId}/incomes - List incomes with filtering/pagination
+- [x] Implement GET /api/spaces/{spaceId}/incomes - List incomes with filtering/pagination
 - [x] Implement GET /api/spaces/{spaceId}/incomes/{incomeId} - Get specific income
 - [x] Implement POST /api/spaces/{spaceId}/incomes - Create new income
 - [x] Implement PUT /api/spaces/{spaceId}/incomes/{incomeId} - Update income
 - [x] Implement DELETE /api/spaces/{spaceId}/incomes/{incomeId} - Delete income
-- [ ] Implement GET /api/spaces/{spaceId}/incomes/summary - Get income summaries by period
-- [ ] Implement GET /api/spaces/{spaceId}/incomes/recent - Get recent incomes
+- [x] Implement GET /api/spaces/{spaceId}/incomes/summary - Get income summaries by period
+- [x] Implement GET /api/spaces/{spaceId}/incomes/recent - Get recent incomes
 
 #### Categories Management
 - [x] Create CategoriesController
@@ -189,11 +189,14 @@
   - [x] Expense summary views by category and time period
   - [x] Create ExpensesView, ExpenseCard, ExpenseForm, ExpenseList components
   - [x] Implement useExpenses and useExpenseForm custom hooks
-- [ ] Build "Income" page for income tracking
-  - [ ] Add new income form with account selection
-  - [ ] List incomes with filtering and search
-  - [ ] Edit/delete existing incomes
-  - [ ] Income summary and trends
+- [x] Build "Income" page for income tracking
+  - [x] Add new income form with account selection
+  - [x] List incomes with filtering and search
+  - [x] Edit/delete existing incomes
+  - [x] Income summary and trends
+  - [x] Create IncomeView, IncomeCard, IncomeForm, IncomeList components
+  - [x] Implement useIncomes and useIncomeForm custom hooks
+  - [x] Add income navigation to Sidebar and MobileNav
 - [x] Build "Budgets" page for budget management
   - [x] Create/edit budget forms with category selection (AddBudgetForm)
   - [ ] Budget progress displays with visual indicators
@@ -295,7 +298,7 @@
 - [x] Activity dashboard and user insights
 - [x] Wallet/Account management
 - [x] Expense tracking (full implementation)
-- [ ] Income tracking (partial implementation)
+- [x] Income tracking (full implementation)
 - [ ] Budget management with visual feedback
 - [ ] Savings goals with progress tracking
 - [ ] Financial projections and forecasting

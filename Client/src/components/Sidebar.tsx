@@ -1,5 +1,5 @@
 import type { FC, Dispatch } from 'react';
-import { Wallet, Home, TrendingUp, CreditCard, Target, PiggyBank, BarChart3, Settings, LogOut, ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
+import { Wallet, Home, TrendingUp, CreditCard, Target, PiggyBank, BarChart3, Settings, LogOut, ChevronLeft, ChevronRight, FolderOpen, DollarSign } from 'lucide-react';
 import type { AppState, AppAction } from '../types/budget';
 import { useAuth } from '../AuthContext';
 
@@ -22,6 +22,7 @@ export const Sidebar: FC<SidebarProps> = ({ state, dispatch, isCollapsed, setIsC
     { view: 'accounts', label: 'Wallet', icon: Wallet },
     { view: 'transactions', label: 'Transactions', icon: TrendingUp },
     { view: 'expenses', label: 'Expenses', icon: CreditCard },
+    { view: 'income', label: 'Income', icon: DollarSign },
     { view: 'categories', label: 'Categories', icon: FolderOpen },
     { view: 'budgets', label: 'Budgets', icon: Target },
     { view: 'goals', label: 'Goals', icon: PiggyBank },

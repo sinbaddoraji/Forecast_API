@@ -30,16 +30,47 @@ public class IncomesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Income>>> GetIncomes(Guid spaceId)
+    public async Task<ActionResult<IEnumerable<Income>>> GetIncomes(
+        Guid spaceId,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] Guid? accountId,
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
         if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
 
-        return await _context.Incomes
+        var query = _context.Incomes
             .Where(i => i.SpaceId == spaceId)
             .Include(i => i.Account)
             .Include(i => i.AddedByUser)
+            .AsQueryable();
+
+        if (startDate.HasValue)
+            query = query.Where(i => i.Date >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(i => i.Date <= endDate.Value);
+
+        if (accountId.HasValue)
+            query = query.Where(i => i.AccountId == accountId.Value);
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(i => i.Title.Contains(search) || (i.Notes != null && i.Notes.Contains(search)));
+
+        var totalCount = await query.CountAsync();
+        var incomes = await query
             .OrderByDescending(i => i.Date)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        Response.Headers.Add("X-Total-Count", totalCount.ToString());
+        Response.Headers.Add("X-Page", page.ToString());
+        Response.Headers.Add("X-Page-Size", pageSize.ToString());
+
+        return incomes;
     }
 
     [HttpGet("{id}")]
@@ -177,5 +208,81 @@ public class IncomesController : ControllerBase
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    [HttpGet("summary")]
+    public async Task<ActionResult<object>> GetIncomeSummary(
+        Guid spaceId,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] string period = "monthly")
+    {
+        if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
+
+        var query = _context.Incomes.Where(i => i.SpaceId == spaceId);
+
+        if (startDate.HasValue)
+            query = query.Where(i => i.Date >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(i => i.Date <= endDate.Value);
+
+        var incomes = await query.ToListAsync();
+
+        var summary = period.ToLower() switch
+        {
+            "weekly" => incomes.GroupBy(i => new { 
+                    Year = i.Date.Year, 
+                    Week = (i.Date.DayOfYear - 1) / 7 + 1 
+                })
+                .Select(g => new {
+                    Period = $"{g.Key.Year}-W{g.Key.Week:00}",
+                    TotalAmount = g.Sum(i => i.Amount),
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.Period)
+                .ToList(),
+            "yearly" => incomes.GroupBy(i => i.Date.Year)
+                .Select(g => new {
+                    Period = g.Key.ToString(),
+                    TotalAmount = g.Sum(i => i.Amount),
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.Period)
+                .ToList(),
+            _ => incomes.GroupBy(i => new { i.Date.Year, i.Date.Month })
+                .Select(g => new {
+                    Period = $"{g.Key.Year}-{g.Key.Month:00}",
+                    TotalAmount = g.Sum(i => i.Amount),
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.Period)
+                .ToList()
+        };
+
+        return new {
+            Period = period,
+            StartDate = startDate,
+            EndDate = endDate,
+            TotalIncome = incomes.Sum(i => i.Amount),
+            TotalCount = incomes.Count,
+            Summary = summary
+        };
+    }
+
+    [HttpGet("recent")]
+    public async Task<ActionResult<IEnumerable<Income>>> GetRecentIncomes(
+        Guid spaceId,
+        [FromQuery] int limit = 10)
+    {
+        if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
+
+        return await _context.Incomes
+            .Where(i => i.SpaceId == spaceId)
+            .Include(i => i.Account)
+            .Include(i => i.AddedByUser)
+            .OrderByDescending(i => i.Date)
+            .Take(limit)
+            .ToListAsync();
     }
 }
