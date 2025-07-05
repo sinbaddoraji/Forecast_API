@@ -16,6 +16,8 @@ public sealed class Category
     [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
     
+    [MaxLength(7)]
+    public string? Color { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

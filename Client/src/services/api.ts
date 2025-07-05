@@ -1,7 +1,10 @@
 import { AuthService } from '../AuthService';
 import type { 
-  User, Space, SpaceMember, Account, Category, Expense, 
-  Income, Budget, SavingsGoal 
+  User, Space, SpaceMember, Account, Category,
+  Income, Budget, SavingsGoal, ExpenseResponseDto,
+  CreateExpenseDto, UpdateExpenseDto, ExpenseFilterDto,
+  CategoryResponseDto, CreateCategoryDto, UpdateCategoryDto,
+  CategoryUsageStatsDto
 } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5128/api';
@@ -279,21 +282,62 @@ class ApiService {
   }
 
   // Category endpoints
-  async getCategories(spaceId: string): Promise<Category[]> {
+  async getCategories(spaceId: string): Promise<CategoryResponseDto[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories`);
-    return response.json();
+    const categoriesData = await response.json();
+    
+    return categoriesData.map((category: any) => ({
+      categoryId: category.categoryId,
+      spaceId: category.spaceId,
+      name: category.name,
+      color: category.color,
+      createdAt: new Date(category.createdAt),
+      updatedAt: new Date(category.updatedAt),
+      expenseCount: category.expenseCount || 0,
+      totalExpenses: category.totalExpenses || 0,
+      hasBudgets: category.hasBudgets || false
+    }));
   }
 
-  async createCategory(spaceId: string, category: Omit<Category, 'categoryId' | 'spaceId'>): Promise<Category> {
+  async getCategory(spaceId: string, categoryId: string): Promise<CategoryResponseDto> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories/${categoryId}`);
+    const category = await response.json();
+    
+    return {
+      categoryId: category.categoryId,
+      spaceId: category.spaceId,
+      name: category.name,
+      color: category.color,
+      createdAt: new Date(category.createdAt),
+      updatedAt: new Date(category.updatedAt),
+      expenseCount: category.expenseCount || 0,
+      totalExpenses: category.totalExpenses || 0,
+      hasBudgets: category.hasBudgets || false
+    };
+  }
+
+  async createCategory(spaceId: string, category: CreateCategoryDto): Promise<CategoryResponseDto> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories`, {
       method: 'POST',
       body: JSON.stringify(category),
     });
-    return response.json();
+    const createdCategory = await response.json();
+    
+    return {
+      categoryId: createdCategory.categoryId,
+      spaceId: createdCategory.spaceId,
+      name: createdCategory.name,
+      color: createdCategory.color,
+      createdAt: new Date(createdCategory.createdAt),
+      updatedAt: new Date(createdCategory.updatedAt),
+      expenseCount: createdCategory.expenseCount || 0,
+      totalExpenses: createdCategory.totalExpenses || 0,
+      hasBudgets: createdCategory.hasBudgets || false
+    };
   }
 
-  async updateCategory(spaceId: string, category: Category): Promise<void> {
-    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories/${category.categoryId}`, {
+  async updateCategory(spaceId: string, categoryId: string, category: UpdateCategoryDto): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories/${categoryId}`, {
       method: 'PUT',
       body: JSON.stringify(category),
     });
@@ -305,29 +349,150 @@ class ApiService {
     });
   }
 
+  async getCategoryUsageStats(spaceId: string, startDate?: Date, endDate?: Date): Promise<CategoryUsageStatsDto[]> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/categories/usage-stats`;
+    
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate.toISOString());
+    if (endDate) params.append('endDate', endDate.toISOString());
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    const statsData = await response.json();
+    
+    return statsData.map((stat: any) => ({
+      categoryId: stat.categoryId,
+      name: stat.name,
+      color: stat.color,
+      expenseCount: stat.expenseCount,
+      totalExpenses: stat.totalExpenses,
+      currentMonthExpenses: stat.currentMonthExpenses,
+      hasBudgets: stat.hasBudgets,
+      budgetAmount: stat.budgetAmount,
+      budgetRemaining: stat.budgetRemaining
+    }));
+  }
+
+  async getCategoryExpenseTotals(spaceId: string, startDate: Date, endDate: Date): Promise<Record<string, number>> {
+    const params = new URLSearchParams({
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    });
+    
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/categories/expense-totals?${params}`);
+    return response.json();
+  }
+
   // Expense endpoints
-  async getExpenses(spaceId: string): Promise<Expense[]> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses`);
-    return response.json();
+  async getExpenses(spaceId: string, filter?: ExpenseFilterDto): Promise<ExpenseResponseDto[]> {
+    let url = `${API_BASE_URL}/spaces/${spaceId}/expenses`;
+    
+    if (filter) {
+      const params = new URLSearchParams();
+      if (filter.startDate) params.append('startDate', filter.startDate.toISOString());
+      if (filter.endDate) params.append('endDate', filter.endDate.toISOString());
+      if (filter.categoryId) params.append('categoryId', filter.categoryId);
+      if (filter.accountId) params.append('accountId', filter.accountId);
+      if (filter.limit) params.append('limit', filter.limit.toString());
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await this.fetchWithAuth(url);
+    const expensesData = await response.json();
+    
+    return expensesData.map((expense: any) => ({
+      expenseId: expense.expenseId,
+      spaceId: expense.spaceId,
+      accountId: expense.accountId,
+      accountName: expense.accountName,
+      title: expense.title,
+      amount: expense.amount,
+      date: new Date(expense.date),
+      addedByUserId: expense.addedByUserId,
+      addedByUserName: expense.addedByUserName,
+      categoryId: expense.categoryId,
+      categoryName: expense.categoryName,
+      notes: expense.notes,
+      createdAt: new Date(expense.createdAt),
+      updatedAt: new Date(expense.updatedAt)
+    }));
   }
 
-  async getExpense(spaceId: string, expenseId: string): Promise<Expense> {
+  async getExpense(spaceId: string, expenseId: string): Promise<ExpenseResponseDto> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/${expenseId}`);
-    return response.json();
+    const expense = await response.json();
+    
+    return {
+      expenseId: expense.expenseId,
+      spaceId: expense.spaceId,
+      accountId: expense.accountId,
+      accountName: expense.accountName,
+      title: expense.title,
+      amount: expense.amount,
+      date: new Date(expense.date),
+      addedByUserId: expense.addedByUserId,
+      addedByUserName: expense.addedByUserName,
+      categoryId: expense.categoryId,
+      categoryName: expense.categoryName,
+      notes: expense.notes,
+      createdAt: new Date(expense.createdAt),
+      updatedAt: new Date(expense.updatedAt)
+    };
   }
 
-  async createExpense(spaceId: string, expense: Omit<Expense, 'expenseId' | 'spaceId' | 'addedByUserId'>): Promise<Expense> {
+  async createExpense(spaceId: string, expense: CreateExpenseDto): Promise<ExpenseResponseDto> {
+    const createDto = {
+      accountId: expense.accountId,
+      title: expense.title,
+      amount: expense.amount,
+      date: expense.date.toISOString(),
+      categoryId: expense.categoryId,
+      notes: expense.notes
+    };
+    
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses`, {
       method: 'POST',
-      body: JSON.stringify(expense),
+      body: JSON.stringify(createDto),
     });
-    return response.json();
+    
+    const createdExpense = await response.json();
+    return {
+      expenseId: createdExpense.expenseId,
+      spaceId: createdExpense.spaceId,
+      accountId: createdExpense.accountId,
+      accountName: createdExpense.accountName,
+      title: createdExpense.title,
+      amount: createdExpense.amount,
+      date: new Date(createdExpense.date),
+      addedByUserId: createdExpense.addedByUserId,
+      addedByUserName: createdExpense.addedByUserName,
+      categoryId: createdExpense.categoryId,
+      categoryName: createdExpense.categoryName,
+      notes: createdExpense.notes,
+      createdAt: new Date(createdExpense.createdAt),
+      updatedAt: new Date(createdExpense.updatedAt)
+    };
   }
 
-  async updateExpense(spaceId: string, expense: Expense): Promise<void> {
-    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/${expense.expenseId}`, {
+  async updateExpense(spaceId: string, expenseId: string, expense: UpdateExpenseDto): Promise<void> {
+    const updateDto = {
+      accountId: expense.accountId,
+      title: expense.title,
+      amount: expense.amount,
+      date: expense.date.toISOString(),
+      categoryId: expense.categoryId,
+      notes: expense.notes
+    };
+    
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/${expenseId}`, {
       method: 'PUT',
-      body: JSON.stringify(expense),
+      body: JSON.stringify(updateDto),
     });
   }
 
@@ -335,6 +500,48 @@ class ApiService {
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/${expenseId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getExpensesSummaryByCategory(spaceId: string, startDate: Date, endDate: Date): Promise<Record<string, number>> {
+    const params = new URLSearchParams({
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    });
+    
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/summary/by-category?${params}`);
+    return response.json();
+  }
+
+  async getTotalExpenses(spaceId: string, startDate: Date, endDate: Date): Promise<number> {
+    const params = new URLSearchParams({
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    });
+    
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/total?${params}`);
+    return response.json();
+  }
+
+  async getRecentExpenses(spaceId: string, count: number = 10): Promise<ExpenseResponseDto[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/expenses/recent?count=${count}`);
+    const expensesData = await response.json();
+    
+    return expensesData.map((expense: any) => ({
+      expenseId: expense.expenseId,
+      spaceId: expense.spaceId,
+      accountId: expense.accountId,
+      accountName: expense.accountName,
+      title: expense.title,
+      amount: expense.amount,
+      date: new Date(expense.date),
+      addedByUserId: expense.addedByUserId,
+      addedByUserName: expense.addedByUserName,
+      categoryId: expense.categoryId,
+      categoryName: expense.categoryName,
+      notes: expense.notes,
+      createdAt: new Date(expense.createdAt),
+      updatedAt: new Date(expense.updatedAt)
+    }));
   }
 
   // Income endpoints

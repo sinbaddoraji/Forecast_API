@@ -29,6 +29,8 @@ public class Program
 
         // Register services
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IExpenseService, ExpenseService>();
+        builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddHttpClient<ITokenIntrospectionService, TokenIntrospectionService>();
 
         // Configure OAuth Introspection Authentication
