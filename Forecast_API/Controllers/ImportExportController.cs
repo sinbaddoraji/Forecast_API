@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Forecast_API.Data;
 using Forecast_API.Models;
 using Forecast_API.Models.DTOs;
@@ -53,21 +55,11 @@ public class ImportExportController : ControllerBase
             var result = new ImportResultDto();
             var errors = new List<string>();
 
-            using var reader = new StreamReader(importDto.File.OpenReadStream());
-            var lines = new List<string>();
-            string? line;
-            
-            while ((line = await reader.ReadLineAsync()) != null)
+            // Read CSV content from uploaded file
+            string csvContent;
+            using (var streamReader = new StreamReader(importDto.File.OpenReadStream()))
             {
-                lines.Add(line);
-            }
-
-            result.TotalRows = lines.Count;
-            
-            if (importDto.SkipFirstRow && lines.Count > 0)
-            {
-                lines = lines.Skip(1).ToList();
-                result.TotalRows--;
+                csvContent = await streamReader.ReadToEndAsync();
             }
 
             var accounts = await _context.Accounts
@@ -93,12 +85,34 @@ public class ImportExportController : ControllerBase
                 return BadRequest(new ImportResultDto { Errors = errors });
             }
 
-            foreach (var (csvLine, index) in lines.Select((line, i) => (line, i)))
+            // Use CsvHelper for robust CSV parsing
+            using var reader = new StringReader(csvContent);
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = importDto.SkipFirstRow,
+                MissingFieldFound = null
+            };
+            using var csv = new CsvReader(reader, config);
+            
+            var records = new List<string[]>();
+            
+            // Read all records as string arrays
+            while (csv.Read())
+            {
+                var record = new string[csv.Parser.Count];
+                for (int i = 0; i < csv.Parser.Count; i++)
+                {
+                    record[i] = csv.GetField(i) ?? "";
+                }
+                records.Add(record);
+            }
+            
+            result.TotalRows = records.Count;
+            
+            foreach (var (columns, index) in records.Select((r, i) => (r, i)))
             {
                 try
                 {
-                    var columns = csvLine.Split(',');
-                    
                     if (columns.Length <= Math.Max(importDto.ColumnMapping.DateColumn, 
                         Math.Max(importDto.ColumnMapping.DescriptionColumn, importDto.ColumnMapping.AmountColumn)))
                     {
@@ -107,9 +121,9 @@ public class ImportExportController : ControllerBase
                         continue;
                     }
 
-                    var dateStr = columns[importDto.ColumnMapping.DateColumn].Trim('"');
-                    var description = columns[importDto.ColumnMapping.DescriptionColumn].Trim('"');
-                    var amountStr = columns[importDto.ColumnMapping.AmountColumn].Trim('"');
+                    var dateStr = columns[importDto.ColumnMapping.DateColumn];
+                    var description = columns[importDto.ColumnMapping.DescriptionColumn];
+                    var amountStr = columns[importDto.ColumnMapping.AmountColumn];
 
                     if (!DateTime.TryParseExact(dateStr, importDto.DateFormat, CultureInfo.InvariantCulture, 
                         DateTimeStyles.None, out var date))
@@ -233,20 +247,50 @@ public class ImportExportController : ControllerBase
                 .OrderByDescending(i => i.Date)
                 .ToListAsync();
 
-            var csv = new StringBuilder();
-            csv.AppendLine("Date,Type,Description,Amount,Category,Account,Notes,Added By");
+            // Use CsvHelper for robust CSV export
+            using var writer = new StringWriter();
+            using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            
+            // Write header
+            csvWriter.WriteField("Date");
+            csvWriter.WriteField("Type");
+            csvWriter.WriteField("Description");
+            csvWriter.WriteField("Amount");
+            csvWriter.WriteField("Category");
+            csvWriter.WriteField("Account");
+            csvWriter.WriteField("Notes");
+            csvWriter.WriteField("Added By");
+            csvWriter.NextRecord();
 
+            // Write expense records
             foreach (var expense in expenses)
             {
-                csv.AppendLine($"{expense.Date:yyyy-MM-dd},Expense,\"{expense.Title}\",{expense.Amount},\"{expense.Category.Name}\",\"{expense.Account.Name}\",\"{expense.Notes ?? ""}\",\"{expense.AddedByUser.FirstName} {expense.AddedByUser.LastName}\"");
+                csvWriter.WriteField(expense.Date.ToString("yyyy-MM-dd"));
+                csvWriter.WriteField("Expense");
+                csvWriter.WriteField(expense.Title);
+                csvWriter.WriteField(expense.Amount);
+                csvWriter.WriteField(expense.Category.Name);
+                csvWriter.WriteField(expense.Account.Name);
+                csvWriter.WriteField(expense.Notes ?? "");
+                csvWriter.WriteField($"{expense.AddedByUser.FirstName} {expense.AddedByUser.LastName}");
+                csvWriter.NextRecord();
             }
 
+            // Write income records
             foreach (var income in incomes)
             {
-                csv.AppendLine($"{income.Date:yyyy-MM-dd},Income,\"{income.Title}\",{income.Amount},Income,\"{income.Account.Name}\",\"{income.Notes ?? ""}\",\"{income.AddedByUser.FirstName} {income.AddedByUser.LastName}\"");
+                csvWriter.WriteField(income.Date.ToString("yyyy-MM-dd"));
+                csvWriter.WriteField("Income");
+                csvWriter.WriteField(income.Title);
+                csvWriter.WriteField(income.Amount);
+                csvWriter.WriteField("Income");
+                csvWriter.WriteField(income.Account.Name);
+                csvWriter.WriteField(income.Notes ?? "");
+                csvWriter.WriteField($"{income.AddedByUser.FirstName} {income.AddedByUser.LastName}");
+                csvWriter.NextRecord();
             }
 
-            var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+            var bytes = Encoding.UTF8.GetBytes(writer.ToString());
             var fileName = $"transactions_{spaceId}_{DateTime.Now:yyyyMMdd}.csv";
 
             return File(bytes, "text/csv", fileName);

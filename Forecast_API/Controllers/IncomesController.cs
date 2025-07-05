@@ -165,12 +165,28 @@ public class IncomesController : ControllerBase
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == existingIncome.AccountId && a.SpaceId == spaceId);
-            if (account != null)
+            // Update account balances
+            if (existingIncome.AccountId != updateIncomeDto.AccountId || existingIncome.Amount != updateIncomeDto.Amount)
             {
-                account.CurrentBalance -= existingIncome.Amount;
-                account.CurrentBalance += updateIncomeDto.Amount;
-                account.UpdatedAt = DateTime.UtcNow;
+                // Restore balance to old account (subtract the old income)
+                var oldAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.AccountId == existingIncome.AccountId && a.SpaceId == spaceId);
+                
+                if (oldAccount != null)
+                {
+                    oldAccount.CurrentBalance -= existingIncome.Amount;
+                    oldAccount.UpdatedAt = DateTime.UtcNow;
+                }
+
+                // Update balance on new account (add the new income)
+                var newAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.AccountId == updateIncomeDto.AccountId && a.SpaceId == spaceId);
+                
+                if (newAccount != null)
+                {
+                    newAccount.CurrentBalance += updateIncomeDto.Amount;
+                    newAccount.UpdatedAt = DateTime.UtcNow;
+                }
             }
 
             existingIncome.AccountId = updateIncomeDto.AccountId;
