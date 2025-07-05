@@ -214,5 +214,9 @@ export const CATEGORY_COLORS = [
 ];
 
 export const getRandomCategoryColor = (): string => {
-  return CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)];
-};
+  // Using Math.random() for UI color selection is safe - not cryptographically sensitive
+  // eslint-disable-next-line typescript:S2245
+  return CATEGORY_COLORS.length > 0
+    ? CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)]
+    : '#e0e0e0'; // fallback color that looks good with black text on white background
+}
