@@ -146,6 +146,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         <div 
           className="fixed inset-0 z-5" 
           onClick={() => setShowMenu(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowMenu(false);
+            }
+          }}
+          role="button"
+          tabIndex={0}
         />
       )}
     </div>
