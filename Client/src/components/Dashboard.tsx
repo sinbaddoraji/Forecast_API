@@ -3,7 +3,7 @@ import { Wallet, ArrowUpRight, ArrowDownLeft, Plus, Target, PiggyBank, BarChart3
 import { useAccounts, useTransactions, useBudgets, useSavingsGoals } from '../hooks/useApiData';
 import { useSpace } from '../contexts/SpaceContext';
 
-interface DashboardNewProps {
+interface DashboardProps {
   showBalances: boolean;
   onAddTransaction: () => void;
   onAddBudget: () => void;
@@ -106,7 +106,7 @@ export const Dashboard: FC<DashboardProps> = ({
                 <PiggyBank className="text-purple-600 mb-2" size={24} />
                 <span className="text-sm font-medium text-purple-700 text-center">Add Goal</span>
               </button>
-              <button className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <button onClick={() => onNavigate('reports')} className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <BarChart3 className="text-gray-600 mb-2" size={24} />
                 <span className="text-sm font-medium text-gray-700 text-center">View Reports</span>
               </button>

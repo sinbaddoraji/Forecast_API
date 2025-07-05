@@ -1,42 +1,31 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Plus, TrendingUp, Loader2 } from 'lucide-react';
+import { Plus, TrendingUp } from 'lucide-react';
 import { IncomeForm } from './IncomeForm';
 import { IncomeList } from './IncomeList';
+import { Modal } from './Modal';
 import { useIncomes } from '../hooks/useIncomes';
-import { useToast } from '../hooks/use-toast';
 import type { Income, CreateIncomeDto, UpdateIncomeDto, IncomeFilterDto } from '../types/api';
 
-export function IncomeView() {
-  const { toast } = useToast();
+export const IncomeView: React.FC = () => {
   const [filter, setFilter] = useState<IncomeFilterDto>({});
   const { incomes, loading, error, createIncome, updateIncome, deleteIncome, refresh } = useIncomes(filter);
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateIncome = async (data: CreateIncomeDto) => {
     try {
+      setIsSubmitting(true);
       await createIncome(data);
       setShowAddForm(false);
-      toast({
-        title: "Income Added",
-        description: `Successfully added ${data.title} for $${data.amount.toFixed(2)}`,
-      });
+      // Could add a toast notification here if available
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add income",
-        variant: "destructive",
-      });
+      console.error('Failed to create income:', error);
+      // Could show error notification here
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -44,38 +33,22 @@ export function IncomeView() {
     if (!editingIncome) return;
     
     try {
+      setIsSubmitting(true);
       await updateIncome(editingIncome.incomeId, data);
       setEditingIncome(null);
-      toast({
-        title: "Income Updated",
-        description: `Successfully updated ${data.title}`,
-      });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update income",
-        variant: "destructive",
-      });
+      console.error('Failed to update income:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteIncome = async (incomeId: string) => {
-    const income = incomes.find(i => i.incomeId === incomeId);
-    if (!income) return;
-
     try {
       setDeletingIds(prev => [...prev, incomeId]);
       await deleteIncome(incomeId);
-      toast({
-        title: "Income Deleted",
-        description: `Successfully deleted ${income.title}`,
-      });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete income",
-        variant: "destructive",
-      });
+      console.error('Failed to delete income:', error);
     } finally {
       setDeletingIds(prev => prev.filter(id => id !== incomeId));
     }
@@ -114,56 +87,38 @@ export function IncomeView() {
           </p>
         </div>
         
-        <Button 
+        <button 
           onClick={() => setShowAddForm(true)}
-          className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Add Income
-        </Button>
+        </button>
       </div>
 
       {/* Quick Stats */}
       {incomes.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-green-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">
-                Total Income
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-800">
-                {formatCurrency(calculateTotalIncome())}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-green-200 rounded-lg p-6">
+            <h3 className="text-sm font-medium text-green-700 mb-2">Total Income</h3>
+            <div className="text-2xl font-bold text-green-800">
+              {formatCurrency(calculateTotalIncome())}
+            </div>
+          </div>
           
-          <Card className="border-blue-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">
-                Income Entries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-800">
-                {incomes.length}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-blue-200 rounded-lg p-6">
+            <h3 className="text-sm font-medium text-blue-700 mb-2">Income Entries</h3>
+            <div className="text-2xl font-bold text-blue-800">
+              {incomes.length}
+            </div>
+          </div>
           
-          <Card className="border-purple-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-purple-700">
-                Average Income
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-800">
-                {formatCurrency(incomes.length > 0 ? calculateTotalIncome() / incomes.length : 0)}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-purple-200 rounded-lg p-6">
+            <h3 className="text-sm font-medium text-purple-700 mb-2">Average Income</h3>
+            <div className="text-2xl font-bold text-purple-800">
+              {formatCurrency(incomes.length > 0 ? calculateTotalIncome() / incomes.length : 0)}
+            </div>
+          </div>
         </div>
       )}
 
@@ -180,41 +135,35 @@ export function IncomeView() {
         deletingIds={deletingIds}
       />
 
-      {/* Add Income Dialog */}
-      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-green-600" />
-              Add New Income
-            </DialogTitle>
-          </DialogHeader>
-          <IncomeForm
-            onSubmit={handleCreateIncome}
-            onCancel={() => setShowAddForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Add Income Modal */}
+      <Modal 
+        show={showAddForm} 
+        onClose={() => setShowAddForm(false)} 
+        title="Add New Income"
+      >
+        <IncomeForm
+          onSubmit={handleCreateIncome}
+          onCancel={() => setShowAddForm(false)}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
 
-      {/* Edit Income Dialog */}
-      <Dialog open={!!editingIncome} onOpenChange={(open) => !open && setEditingIncome(null)}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              Edit Income
-            </DialogTitle>
-          </DialogHeader>
-          {editingIncome && (
-            <IncomeForm
-              onSubmit={handleUpdateIncome}
-              onCancel={() => setEditingIncome(null)}
-              initialData={editingIncome}
-              isEdit={true}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Edit Income Modal */}
+      <Modal 
+        show={!!editingIncome} 
+        onClose={() => setEditingIncome(null)} 
+        title="Edit Income"
+      >
+        {editingIncome && (
+          <IncomeForm
+            onSubmit={handleUpdateIncome}
+            onCancel={() => setEditingIncome(null)}
+            initialData={editingIncome}
+            isEdit={true}
+            isSubmitting={isSubmitting}
+          />
+        )}
+      </Modal>
     </div>
   );
-}
+};

@@ -1,23 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Edit, Trash2, CreditCard, Calendar, FileText, DollarSign, User } from 'lucide-react';
 import type { Income } from '../types/api';
 
@@ -28,8 +9,9 @@ interface IncomeCardProps {
   isDeleting?: boolean;
 }
 
-export function IncomeCard({ income, onEdit, onDelete, isDeleting = false }: IncomeCardProps) {
+export const IncomeCard: React.FC<IncomeCardProps> = ({ income, onEdit, onDelete, isDeleting = false }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
@@ -66,8 +48,8 @@ export function IncomeCard({ income, onEdit, onDelete, isDeleting = false }: Inc
 
   return (
     <>
-      <Card className="group hover:shadow-md transition-shadow duration-200 border-l-4 border-l-green-500">
-        <CardContent className="p-4">
+      <div className="group bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200 border-l-4 border-l-green-500">
+        <div className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               {/* Title and Amount */}
@@ -84,31 +66,41 @@ export function IncomeCard({ income, onEdit, onDelete, isDeleting = false }: Inc
                   </div>
                 </div>
                 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      disabled={isDeleting}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(income)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="text-red-600 focus:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100"
+                    disabled={isDeleting}
+                    aria-label="More options"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  
+                  {showDropdown && (
+                    <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                      <button
+                        onClick={() => {
+                          onEdit(income);
+                          setShowDropdown(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDeleteDialog(true);
+                          setShowDropdown(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Income Details */}
@@ -118,9 +110,9 @@ export function IncomeCard({ income, onEdit, onDelete, isDeleting = false }: Inc
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <CreditCard className="h-4 w-4" />
                     <span>{income.account.name}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                       {income.account.type}
-                    </Badge>
+                    </span>
                   </div>
                 )}
 
@@ -161,31 +153,44 @@ export function IncomeCard({ income, onEdit, onDelete, isDeleting = false }: Inc
               )}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Income</AlertDialogTitle>
-            <AlertDialogDescription>
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-2">Delete Income</h3>
+            <p className="text-gray-600 mb-4">
               Are you sure you want to delete "{income.title}"? This will remove the income record 
               and adjust your account balance. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Backdrop to close dropdown */}
+      {showDropdown && (
+        <div 
+          className="fixed inset-0 z-5" 
+          onClick={() => setShowDropdown(false)}
+        />
+      )}
     </>
   );
 }

@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Search, Filter, Calendar, CreditCard, RefreshCw, Loader2, TrendingUp } from 'lucide-react';
 import { IncomeCard } from './IncomeCard';
-import { useAccounts } from '../hooks/useAccounts';
+import { useAccounts } from '../hooks/useApiData';
 import type { Income, IncomeFilterDto } from '../types/api';
 
 interface IncomeListProps {
@@ -21,7 +16,7 @@ interface IncomeListProps {
   deletingIds?: string[];
 }
 
-export function IncomeList({ 
+export const IncomeList: React.FC<IncomeListProps> = ({ 
   incomes, 
   loading, 
   error, 
@@ -31,7 +26,7 @@ export function IncomeList({
   filter = {},
   onFilterChange,
   deletingIds = []
-}: IncomeListProps) {
+}) => {
   const { accounts } = useAccounts();
   const [searchTerm, setSearchTerm] = useState(filter.search || '');
   const [selectedAccount, setSelectedAccount] = useState(filter.accountId || '');
@@ -108,185 +103,182 @@ export function IncomeList({
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="p-6 text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={onRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="bg-white border border-red-200 rounded-lg p-6 text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button 
+          onClick={onRefresh}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 mx-auto"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </button>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Search and Filter Controls */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search incomes by title or notes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                Filters
-                {getFilterCount() > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {getFilterCount()}
-                  </Badge>
-                )}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRefresh}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-              </Button>
+      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="space-y-4">
+          {/* Search Bar */}
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search incomes by title or notes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
+            
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {getFilterCount() > 0 && (
+                <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs ml-1">
+                  {getFilterCount()}
+                </span>
+              )}
+            </button>
 
-            {/* Advanced Filters */}
-            {showFilters && (
-              <div className="pt-4 border-t space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Account Filter */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      Account
-                    </label>
-                    <Select value={selectedAccount} onValueChange={handleAccountChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All accounts" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">All accounts</SelectItem>
-                        {accounts.map((account) => (
-                          <SelectItem key={account.accountId} value={account.accountId}>
-                            {account.name} ({account.type})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </button>
+          </div>
 
-                  {/* Start Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      From Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      onBlur={handleDateRangeChange}
-                    />
-                  </div>
-
-                  {/* End Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      To Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      onBlur={handleDateRangeChange}
-                    />
-                  </div>
+          {/* Advanced Filters */}
+          {showFilters && (
+            <div className="pt-4 border-t space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Account Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Account
+                  </label>
+                  <select
+                    value={selectedAccount}
+                    onChange={(e) => handleAccountChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All accounts</option>
+                    {accounts.map((account) => (
+                      <option key={account.accountId} value={account.accountId}>
+                        {account.name} ({account.type})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {getFilterCount() > 0 && (
-                  <div className="flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={clearFilters}>
-                      Clear Filters
-                    </Button>
-                  </div>
-                )}
+                {/* Start Date */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    From Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    onBlur={handleDateRangeChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* End Date */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    To Date
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    onBlur={handleDateRangeChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
+              {getFilterCount() > 0 && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={clearFilters}
+                    className="px-3 py-1 text-gray-600 hover:text-gray-800 text-sm"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Summary Card */}
       {incomes.length > 0 && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <TrendingUp className="h-5 w-5" />
-              Income Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-green-700">Total Income</p>
-                <p className="text-2xl font-bold text-green-800">
-                  {formatCurrency(calculateTotalIncome())}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-green-700">Number of Entries</p>
-                <p className="text-2xl font-bold text-green-800">
-                  {incomes.length}
-                </p>
-              </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+          <h3 className="flex items-center gap-2 text-green-800 font-semibold mb-4">
+            <TrendingUp className="h-5 w-5" />
+            Income Summary
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-green-700">Total Income</p>
+              <p className="text-2xl font-bold text-green-800">
+                {formatCurrency(calculateTotalIncome())}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-sm text-green-700">Number of Entries</p>
+              <p className="text-2xl font-bold text-green-800">
+                {incomes.length}
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Income List */}
       {loading && incomes.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-500">Loading incomes...</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500">Loading incomes...</p>
+        </div>
       ) : incomes.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No incomes found</h3>
-            <p className="text-gray-500 mb-4">
-              {getFilterCount() > 0 
-                ? "No incomes match your current filters. Try adjusting your search criteria."
-                : "You haven't added any income entries yet. Start by adding your first income!"
-              }
-            </p>
-            {getFilterCount() > 0 && (
-              <Button variant="outline" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No incomes found</h3>
+          <p className="text-gray-500 mb-4">
+            {getFilterCount() > 0 
+              ? "No incomes match your current filters. Try adjusting your search criteria."
+              : "You haven't added any income entries yet. Start by adding your first income!"
+            }
+          </p>
+          {getFilterCount() > 0 && (
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-4">
           {incomes.map((income) => (
@@ -300,15 +292,13 @@ export function IncomeList({
           ))}
           
           {loading && (
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
-                <p className="text-sm text-gray-500">Loading more incomes...</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
+              <p className="text-sm text-gray-500">Loading more incomes...</p>
+            </div>
           )}
         </div>
       )}
     </div>
   );
-}
+};

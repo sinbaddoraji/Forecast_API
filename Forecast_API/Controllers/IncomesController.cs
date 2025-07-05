@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Forecast_API.Models;
+using Forecast_API.Models.DTOs;
 using Forecast_API.Data;
 using Microsoft.EntityFrameworkCore;
 using Forecast_API.Services;
@@ -66,9 +67,9 @@ public class IncomesController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
-        Response.Headers.Add("X-Total-Count", totalCount.ToString());
-        Response.Headers.Add("X-Page", page.ToString());
-        Response.Headers.Add("X-Page-Size", pageSize.ToString());
+        Response.Headers["X-Total-Count"] = totalCount.ToString();
+        Response.Headers["X-Page"] = page.ToString();
+        Response.Headers["X-Page-Size"] = pageSize.ToString();
 
         return incomes;
     }
@@ -92,15 +93,32 @@ public class IncomesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Income>> PostIncome(Guid spaceId, Income income)
+    public async Task<ActionResult<Income>> PostIncome(Guid spaceId, CreateIncomeDto createIncomeDto)
     {
         if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
 
         var user = await _userService.GetOrCreateUserAsync(User);
         
-        income.SpaceId = spaceId;
-        income.AddedByUserId = user.UserId;
-        income.IncomeId = Guid.NewGuid();
+        // Verify the account belongs to this space
+        var accountExists = await _context.Accounts.AnyAsync(a => a.AccountId == createIncomeDto.AccountId && a.SpaceId == spaceId);
+        if (!accountExists)
+        {
+            return BadRequest("Account not found in this space.");
+        }
+        
+        var income = new Income
+        {
+            IncomeId = Guid.NewGuid(),
+            SpaceId = spaceId,
+            AccountId = createIncomeDto.AccountId,
+            Title = createIncomeDto.Title,
+            Amount = createIncomeDto.Amount,
+            Date = createIncomeDto.Date,
+            Notes = createIncomeDto.Notes,
+            AddedByUserId = user.UserId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -127,13 +145,8 @@ public class IncomesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutIncome(Guid spaceId, Guid id, Income income)
+    public async Task<IActionResult> PutIncome(Guid spaceId, Guid id, UpdateIncomeDto updateIncomeDto)
     {
-        if (id != income.IncomeId)
-        {
-            return BadRequest();
-        }
-
         if (!await IsUserMemberOfSpace(spaceId)) return Forbid();
 
         var existingIncome = await _context.Incomes.FirstOrDefaultAsync(i => i.IncomeId == id && i.SpaceId == spaceId);
@@ -142,20 +155,46 @@ public class IncomesController : ControllerBase
             return NotFound();
         }
 
+        // Verify the new account belongs to this space
+        var accountExists = await _context.Accounts.AnyAsync(a => a.AccountId == updateIncomeDto.AccountId && a.SpaceId == spaceId);
+        if (!accountExists)
+        {
+            return BadRequest("Account not found in this space.");
+        }
+
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == existingIncome.AccountId && a.SpaceId == spaceId);
-            if (account != null)
+            // Update account balances
+            if (existingIncome.AccountId != updateIncomeDto.AccountId || existingIncome.Amount != updateIncomeDto.Amount)
             {
-                account.CurrentBalance -= existingIncome.Amount;
-                account.CurrentBalance += income.Amount;
-                account.UpdatedAt = DateTime.UtcNow;
+                // Restore balance to old account (subtract the old income)
+                var oldAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.AccountId == existingIncome.AccountId && a.SpaceId == spaceId);
+                
+                if (oldAccount != null)
+                {
+                    oldAccount.CurrentBalance -= existingIncome.Amount;
+                    oldAccount.UpdatedAt = DateTime.UtcNow;
+                }
+
+                // Update balance on new account (add the new income)
+                var newAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.AccountId == updateIncomeDto.AccountId && a.SpaceId == spaceId);
+                
+                if (newAccount != null)
+                {
+                    newAccount.CurrentBalance += updateIncomeDto.Amount;
+                    newAccount.UpdatedAt = DateTime.UtcNow;
+                }
             }
 
-            income.SpaceId = spaceId;
-            income.AddedByUserId = existingIncome.AddedByUserId;
-            _context.Entry(existingIncome).CurrentValues.SetValues(income);
+            existingIncome.AccountId = updateIncomeDto.AccountId;
+            existingIncome.Title = updateIncomeDto.Title;
+            existingIncome.Amount = updateIncomeDto.Amount;
+            existingIncome.Date = updateIncomeDto.Date;
+            existingIncome.Notes = updateIncomeDto.Notes;
+            existingIncome.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

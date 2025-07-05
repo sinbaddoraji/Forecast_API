@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Forecast_API.Migrations.CoreDb
 {
     [DbContext(typeof(CoreDbContext))]
-    [Migration("20250630195606_UpdateAccountTypeEnum")]
-    partial class UpdateAccountTypeEnum
+    [Migration("20250705141611_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -103,6 +103,10 @@ namespace Forecast_API.Migrations.CoreDb
                     b.Property<Guid>("CategoryId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
