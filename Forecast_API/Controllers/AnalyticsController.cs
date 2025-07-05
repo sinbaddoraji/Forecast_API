@@ -213,22 +213,31 @@ public class AnalyticsController : ControllerBase
 
             var monthlyData = new List<MonthlySummaryDto>();
 
+            var expenses = await _context.Expenses
+                .Where(e => e.SpaceId == spaceId && e.Date >= startDate && e.Date <= endDate)
+                .Include(e => e.Category)
+                .ToListAsync();
+
+            var incomes = await _context.Incomes
+                .Where(i => i.SpaceId == spaceId && i.Date >= startDate && i.Date <= endDate)
+                .ToListAsync();
+
+            var groupedExpenses = expenses
+                .GroupBy(e => new { e.Date.Year, e.Date.Month })
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var groupedIncomes = incomes
+                .GroupBy(i => new { i.Date.Year, i.Date.Month })
+                .ToDictionary(g => g.Key, g => g.ToList());
+
             for (var date = new DateTime(startDate.Year, startDate.Month, 1, 0, 0, 0, DateTimeKind.Utc); 
                  date <= endDate; 
                  date = date.AddMonths(1))
             {
-                var monthStart = date;
-                var monthEnd = date.AddMonths(1).AddDays(-1);
+                var key = new { Year = date.Year, Month = date.Month };
 
-                var monthlyExpenses = await _context.Expenses
-                    .Where(e => e.SpaceId == spaceId && e.Date >= monthStart && e.Date <= monthEnd)
-                    .Include(e => e.Category)
-                    .ToListAsync();
-
-                var monthlyIncomes = await _context.Incomes
-                    .Where(i => i.SpaceId == spaceId && i.Date >= monthStart && i.Date <= monthEnd)
-                    .ToListAsync();
-
+                var monthlyExpenses = groupedExpenses.ContainsKey(key) ? groupedExpenses[key] : new List<Expense>();
+                var monthlyIncomes = groupedIncomes.ContainsKey(key) ? groupedIncomes[key] : new List<Income>();
                 var totalExpenses = monthlyExpenses.Sum(e => e.Amount);
                 var totalIncome = monthlyIncomes.Sum(i => i.Amount);
                 var netIncome = totalIncome - totalExpenses;
