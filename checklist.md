@@ -68,6 +68,8 @@
 - [x] Implement DELETE /api/spaces/{spaceId}/incomes/{incomeId} - Delete income
 - [x] Implement GET /api/spaces/{spaceId}/incomes/summary - Get income summaries by period
 - [x] Implement GET /api/spaces/{spaceId}/incomes/recent - Get recent incomes
+- [x] Create IncomeDto with proper DTOs following ExpenseDto pattern
+- [x] Update IncomesController to use DTOs and fix validation issues
 
 #### Categories Management
 - [x] Create CategoriesController

@@ -1,11 +1,6 @@
 import React, { useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, DollarSign, Calendar, FileText, CreditCard } from 'lucide-react';
-import { useAccounts } from '../hooks/useAccounts';
+import { useAccounts } from '../hooks/useApiData';
 import { useIncomeForm } from '../hooks/useIncomes';
 import type { CreateIncomeDto, UpdateIncomeDto, Income } from '../types/api';
 
@@ -14,39 +9,29 @@ interface IncomeFormProps {
   onCancel: () => void;
   initialData?: Income;
   isEdit?: boolean;
+  isSubmitting?: boolean;
 }
 
-export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: IncomeFormProps) {
+export const IncomeForm: React.FC<IncomeFormProps> = ({ 
+  onSubmit, 
+  onCancel, 
+  initialData, 
+  isEdit = false,
+  isSubmitting = false 
+}) => {
   const { accounts, loading: accountsLoading } = useAccounts();
   const {
     formData,
     errors,
-    isSubmitting,
     updateField,
-    submitForm,
+    validateForm,
     resetForm
-  } = useIncomeForm({
-    accountId: initialData?.accountId || '',
-    title: initialData?.title || '',
-    amount: initialData?.amount || 0,
-    date: initialData?.date || new Date(),
-    notes: initialData?.notes || ''
-  });
-
-  // Reset form when initial data changes
-  useEffect(() => {
-    if (initialData) {
-      updateField('accountId', initialData.accountId);
-      updateField('title', initialData.title);
-      updateField('amount', initialData.amount);
-      updateField('date', initialData.date);
-      updateField('notes', initialData.notes || '');
-    }
-  }, [initialData]);
+  } = useIncomeForm(initialData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitForm(onSubmit);
+    if (!validateForm()) return;
+    await onSubmit(formData);
   };
 
   const formatDateForInput = (date: Date): string => {
@@ -65,31 +50,27 @@ export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: 
       <div className="space-y-4">
         {/* Account Selection */}
         <div className="space-y-2">
-          <Label htmlFor="accountId" className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <CreditCard className="h-4 w-4" />
             Account *
-          </Label>
-          <Select 
-            value={formData.accountId} 
-            onValueChange={(value) => updateField('accountId', value)}
+          </label>
+          <select
+            value={formData.accountId}
+            onChange={(e) => updateField('accountId', e.target.value)}
             disabled={accountsLoading}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.accountId ? 'border-red-500' : 'border-gray-300'
+            }`}
           >
-            <SelectTrigger className={errors.accountId ? 'border-red-500' : ''}>
-              <SelectValue placeholder={accountsLoading ? "Loading accounts..." : "Select an account"} />
-            </SelectTrigger>
-            <SelectContent>
-              {accounts.map((account) => (
-                <SelectItem key={account.accountId} value={account.accountId}>
-                  <div className="flex items-center justify-between w-full">
-                    <span>{account.name}</span>
-                    <span className="text-sm text-gray-500 ml-2">
-                      {account.type} • ${account.currentBalance.toFixed(2)}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <option value="">
+              {accountsLoading ? "Loading accounts..." : "Select an account"}
+            </option>
+            {accounts.map((account) => (
+              <option key={account.accountId} value={account.accountId}>
+                {account.name} ({account.type}) • ${account.currentBalance.toFixed(2)}
+              </option>
+            ))}
+          </select>
           {errors.accountId && (
             <p className="text-sm text-red-600">{errors.accountId}</p>
           )}
@@ -97,17 +78,19 @@ export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: 
 
         {/* Title */}
         <div className="space-y-2">
-          <Label htmlFor="title" className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <FileText className="h-4 w-4" />
             Title *
-          </Label>
-          <Input
-            id="title"
+          </label>
+          <input
+            type="text"
             value={formData.title}
             onChange={(e) => updateField('title', e.target.value)}
             placeholder="e.g., Salary, Freelance payment, Investment return"
-            className={errors.title ? 'border-red-500' : ''}
             maxLength={100}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.title ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
           {errors.title && (
             <p className="text-sm text-red-600">{errors.title}</p>
@@ -119,21 +102,22 @@ export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: 
 
         {/* Amount */}
         <div className="space-y-2">
-          <Label htmlFor="amount" className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <DollarSign className="h-4 w-4" />
             Amount *
-          </Label>
+          </label>
           <div className="relative">
             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              id="amount"
+            <input
               type="number"
               value={formData.amount || ''}
               onChange={(e) => updateField('amount', parseFloat(e.target.value) || 0)}
               placeholder="0.00"
               step="0.01"
               min="0"
-              className={`pl-10 ${errors.amount ? 'border-red-500' : ''}`}
+              className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.amount ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
           </div>
           {errors.amount && (
@@ -143,16 +127,17 @@ export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: 
 
         {/* Date */}
         <div className="space-y-2">
-          <Label htmlFor="date" className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <Calendar className="h-4 w-4" />
             Date *
-          </Label>
-          <Input
-            id="date"
+          </label>
+          <input
             type="date"
             value={formatDateForInput(formData.date)}
             onChange={(e) => handleDateChange(e.target.value)}
-            className={errors.date ? 'border-red-500' : ''}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.date ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
           {errors.date && (
             <p className="text-sm text-red-600">{errors.date}</p>
@@ -161,17 +146,18 @@ export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: 
 
         {/* Notes */}
         <div className="space-y-2">
-          <Label htmlFor="notes">
+          <label className="text-sm font-medium text-gray-700">
             Notes (optional)
-          </Label>
-          <Textarea
-            id="notes"
+          </label>
+          <textarea
             value={formData.notes}
             onChange={(e) => updateField('notes', e.target.value)}
             placeholder="Add any additional details about this income..."
-            className={`resize-none ${errors.notes ? 'border-red-500' : ''}`}
             rows={3}
             maxLength={500}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+              errors.notes ? 'border-red-500' : 'border-gray-300'
+            }`}
           />
           {errors.notes && (
             <p className="text-sm text-red-600">{errors.notes}</p>
@@ -184,36 +170,35 @@ export function IncomeForm({ onSubmit, onCancel, initialData, isEdit = false }: 
 
       {/* Form Actions */}
       <div className="flex items-center gap-3 pt-4 border-t">
-        <Button
+        <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
           {isEdit ? 'Update Income' : 'Add Income'}
-        </Button>
+        </button>
         
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={onCancel}
           disabled={isSubmitting}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           Cancel
-        </Button>
+        </button>
 
         {!isEdit && (
-          <Button
+          <button
             type="button"
-            variant="ghost"
             onClick={resetForm}
             disabled={isSubmitting}
-            className="ml-auto"
+            className="ml-auto px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
           >
             Clear Form
-          </Button>
+          </button>
         )}
       </div>
     </form>
   );
-}
+};
