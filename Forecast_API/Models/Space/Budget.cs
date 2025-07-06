@@ -29,7 +29,7 @@ public sealed class Budget
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
-    // Navigation properties
-    public Space Space { get; set; } = null!;
-    public Category Category { get; set; } = null!;
+    // Navigation properties (not required for API creation)
+    public Space? Space { get; set; }
+    public Category? Category { get; set; }
 }

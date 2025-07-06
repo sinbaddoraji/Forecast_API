@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Calendar, User, Edit2, Trash2, MoreVertical } from 'lucide-react';
 import type { ExpenseResponseDto } from '../types/api';
+import { useSpace } from '../contexts/SpaceContext';
+import { formatCurrencyCompact } from '../utils/currency';
 
 interface ExpenseCardProps {
   expense: ExpenseResponseDto;
@@ -15,6 +17,8 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
   onDelete,
   showActions = true
 }) => {
+  const { currentSpace } = useSpace();
+  const currency = currentSpace?.currency || 'USD';
   const [showMenu, setShowMenu] = useState(false);
 
   const formatDate = (date: Date) => {
@@ -25,12 +29,6 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
     }).format(new Date(date));
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -45,7 +43,7 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
         
         <div className="flex items-center gap-2">
           <span className="font-bold text-lg text-red-600">
-            -{formatCurrency(expense.amount)}
+            -{formatCurrencyCompact(expense.amount, currency)}
           </span>
           
           {showActions && (onEdit || onDelete) && (

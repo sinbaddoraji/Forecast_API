@@ -32,6 +32,9 @@ public class Program
         builder.Services.AddScoped<IExpenseService, ExpenseService>();
         builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddHttpClient<ITokenIntrospectionService, TokenIntrospectionService>();
+        
+        // Register background services
+        builder.Services.AddHostedService<RecurringTransactionService>();
 
         // Configure OAuth Introspection Authentication
         var authConfig = builder.Configuration.GetSection("Authentication:Zitadel");

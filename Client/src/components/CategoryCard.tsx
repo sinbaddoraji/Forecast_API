@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Edit2, Trash2, MoreVertical, DollarSign, TrendingUp } from 'lucide-react';
 import type { CategoryResponseDto } from '../types/api';
+import { useSpace } from '../contexts/SpaceContext';
+import { formatCurrencyCompact } from '../utils/currency';
 
 interface CategoryCardProps {
   category: CategoryResponseDto;
@@ -17,14 +19,10 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   showActions = true,
   showStats = true
 }) => {
+  const { currentSpace } = useSpace();
+  const currency = currentSpace?.currency || 'USD';
   const [showMenu, setShowMenu] = useState(false);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   const getColorStyles = (color?: string) => {
     if (!color) {
@@ -129,13 +127,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
             <span className="text-gray-500">Total Spent:</span>
             <span className="font-medium flex items-center gap-1">
               <DollarSign className="w-3 h-3" />
-              {formatCurrency(category.totalExpenses)}
+              {formatCurrencyCompact(category.totalExpenses, currency)}
             </span>
           </div>
           
           {category.expenseCount > 0 && (
             <div className="text-xs text-gray-400">
-              Avg per expense: {formatCurrency(category.totalExpenses / category.expenseCount)}
+              Avg per expense: {formatCurrencyCompact(category.totalExpenses / category.expenseCount, currency)}
             </div>
           )}
         </div>

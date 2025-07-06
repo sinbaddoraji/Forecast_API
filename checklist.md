@@ -91,9 +91,9 @@
 - [x] Implement POST /api/spaces/{spaceId}/budgets - Create new budget
 - [x] Implement PUT /api/spaces/{spaceId}/budgets/{budgetId} - Update budget
 - [x] Implement DELETE /api/spaces/{spaceId}/budgets/{budgetId} - Delete budget
-- [ ] Implement GET /api/spaces/{spaceId}/budgets/current - Get current period budgets with spending
-- [ ] Implement GET /api/spaces/{spaceId}/budgets/{budgetId}/progress - Get detailed budget progress
-- [ ] Implement GET /api/spaces/{spaceId}/budgets/alerts - Get budget alerts/warnings
+- [x] Implement GET /api/spaces/{spaceId}/budgets/current - Get current period budgets with spending
+- [x] Implement GET /api/spaces/{spaceId}/budgets/{budgetId}/progress - Get detailed budget progress
+- [x] Implement GET /api/spaces/{spaceId}/budgets/alerts - Get budget alerts/warnings
 
 #### Savings Goals Management
 - [x] Create SavingsGoalsController
@@ -103,9 +103,9 @@
 - [x] Implement PUT /api/spaces/{spaceId}/savingsgoals/{goalId} - Update savings goal
 - [x] Implement DELETE /api/spaces/{spaceId}/savingsgoals/{goalId} - Delete savings goal
 - [x] Implement POST /api/spaces/{spaceId}/savingsgoals/{goalId}/contribute - Add contribution to goal
-- [ ] Implement POST /api/spaces/{spaceId}/savingsgoals/{goalId}/withdraw - Withdraw from goal
-- [ ] Implement GET /api/spaces/{spaceId}/savingsgoals/{goalId}/history - Get contribution history
-- [ ] Implement GET /api/spaces/{spaceId}/savingsgoals/summary - Get goals progress summary
+- [x] Implement POST /api/spaces/{spaceId}/savingsgoals/{goalId}/withdraw - Withdraw from goal
+- [x] Implement GET /api/spaces/{spaceId}/savingsgoals/{goalId}/history - Get contribution history
+- [x] Implement GET /api/spaces/{spaceId}/savingsgoals/summary - Get goals progress summary
 
 #### Financial Analytics & Reports
 - [x] Create AnalyticsController
@@ -119,12 +119,12 @@
 - [x] Implement GET /api/spaces/{spaceId}/analytics/projections - Get financial projections
 
 #### Data Import/Export
-- [ ] Create ImportExportController
-- [ ] Implement POST /api/spaces/{spaceId}/import/csv - Import transactions from CSV
+- [x] Create ImportExportController
+- [x] Implement POST /api/spaces/{spaceId}/import/csv - Import transactions from CSV
 - [ ] Implement POST /api/spaces/{spaceId}/import/bank - Import from bank API/file formats
-- [ ] Implement GET /api/spaces/{spaceId}/export/csv - Export transactions to CSV
-- [ ] Implement GET /api/spaces/{spaceId}/export/pdf-report - Generate PDF financial report
-- [ ] Implement GET /api/spaces/{spaceId}/export/excel - Export data to Excel format
+- [x] Implement GET /api/spaces/{spaceId}/export/csv - Export transactions to CSV
+- [x] Implement GET /api/spaces/{spaceId}/export/pdf-report - Generate PDF financial report
+- [x] Implement GET /api/spaces/{spaceId}/export/excel - Export data to Excel format
 
 ### Business Logic & Services
 - [x] Implement transaction logic for automatic account balance updates
@@ -201,15 +201,15 @@
   - [x] Add income navigation to Sidebar and MobileNav
 - [x] Build "Budgets" page for budget management
   - [x] Create/edit budget forms with category selection (AddBudgetForm)
-  - [ ] Budget progress displays with visual indicators
-  - [ ] Budget vs actual spending comparison
-  - [ ] Budget alerts and notifications
+  - [x] Budget progress displays with visual indicators
+  - [x] Budget vs actual spending comparison
+  - [x] Budget alerts and notifications
   - [x] Create BudgetsView component
 - [x] Build "Savings Goals" page for goal tracking
   - [x] Create/edit savings goals (AddGoalForm)
-  - [ ] Goal progress visualization
-  - [ ] Contribution and withdrawal forms
-  - [ ] Goal achievement tracking
+  - [x] Goal progress visualization
+  - [x] Contribution and withdrawal forms
+  - [x] Goal achievement tracking
   - [x] Create GoalsView component
 
 #### Categories Management
@@ -222,16 +222,20 @@
 - [x] Add color picker for category customization
 
 #### Analytics & Reports Frontend
-- [ ] Build "Insights/Analytics" dashboard page
-  - [ ] Spending trends charts and graphs
-  - [ ] Income vs expenses comparison
-  - [ ] Category breakdown pie/bar charts
-  - [ ] Monthly/yearly financial summaries
-  - [ ] Net worth tracking over time
-  - [ ] Cash flow projections
-- [ ] Create interactive data visualization components
-- [ ] Implement export functionality (CSV, PDF reports)
-- [ ] Build responsive charts for mobile devices
+- [x] Build "Insights/Analytics" dashboard page
+  - [x] Spending trends charts and graphs
+  - [x] Income vs expenses comparison
+  - [x] Category breakdown pie/bar charts
+  - [x] Monthly/yearly financial summaries
+  - [x] Net worth tracking over time
+  - [x] Cash flow projections
+- [x] Create interactive data visualization components
+- [x] Implement export functionality (CSV, PDF reports)
+- [x] Build responsive charts for mobile devices
+- [x] Create ImportExportView with tabbed interface for import/export
+- [x] Build CsvImportForm with customizable column mapping
+- [x] Create DataExportForm with multiple export formats
+- [x] Add import/export navigation items to sidebar and mobile nav
 
 #### Forms & UI Components
 - [x] Create reusable form components for financial data entry
@@ -242,10 +246,14 @@
 - [x] Create confirmation dialogs for delete operations
 - [x] Implement loading states and error handling for all forms
 
-### Phase 2 (V2 - Collaboration)
+### Phase 2 (V2 - Additional Features)
 - [x] Create "Manage Spaces" page
 - [x] Implement space-switcher in navigation UI
 - [x] Enable collaborative space features
+- [x] Add recurring transaction management (expenses and income)
+- [x] Implement currency selection per space
+- [x] Create currency formatting utilities and components
+- [x] Add comprehensive import/export functionality
 
 ## Infrastructure & Deployment
 
@@ -303,10 +311,13 @@
 - [x] Wallet/Account management
 - [x] Expense tracking (full implementation)
 - [x] Income tracking (full implementation)
-- [ ] Budget management with visual feedback
-- [ ] Savings goals with progress tracking
+- [x] Budget management with visual feedback
+- [x] Savings goals with progress tracking
 - [x] Financial projections and forecasting
-- [ ] Data visualization & insights dashboard
+- [x] Data visualization & insights dashboard
 - [x] Secure OAuth 2.0 authentication with PKCE
 - [x] Collaborative spaces (V2) - Core functionality complete
+- [x] Recurring transactions with automatic generation
+- [x] Multi-currency support with space-level configuration
+- [x] Import/Export functionality (CSV import, multiple export formats)
 - [ ] Read-only offline access via service worker

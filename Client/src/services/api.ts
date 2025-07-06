@@ -5,7 +5,12 @@ import type {
   CreateExpenseDto, UpdateExpenseDto, ExpenseFilterDto,
   CategoryResponseDto, CreateCategoryDto, UpdateCategoryDto,
   CategoryUsageStatsDto, CreateIncomeDto,
-  UpdateIncomeDto, IncomeFilterDto
+  UpdateIncomeDto, IncomeFilterDto,
+  RecurringExpense, RecurringIncome,
+  CreateRecurringExpenseDto, UpdateRecurringExpenseDto,
+  CreateRecurringIncomeDto, UpdateRecurringIncomeDto,
+  CreateSpaceDto, UpdateSpaceDto,
+  DueRecurringExpense, DueRecurringIncome
 } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5128/api';
@@ -32,6 +37,7 @@ class ApiHelpers {
       spaceId: space.SpaceId || space.spaceId,
       name: space.Name || space.name,
       ownerId: space.OwnerId || space.ownerId,
+      currency: space.Currency || space.currency || 'USD',
       createdAt: new Date(space.CreatedAt || space.createdAt),
       updatedAt: new Date(space.UpdatedAt || space.updatedAt)
     };
@@ -248,16 +254,16 @@ class ApiService {
     return ApiHelpers.transformSpace(spaceData);
   }
 
-  async createSpace(space: Omit<Space, 'spaceId' | 'ownerId' | 'createdAt' | 'updatedAt'>): Promise<Space> {
+  async createSpace(space: CreateSpaceDto): Promise<Space> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces`, {
       method: 'POST',
-      body: JSON.stringify({ name: space.name }),
+      body: JSON.stringify(space),
     });
     const createdSpace = await response.json();
     return ApiHelpers.transformSpace(createdSpace);
   }
 
-  async updateSpace(spaceId: string, space: Partial<Space>): Promise<void> {
+  async updateSpace(spaceId: string, space: UpdateSpaceDto): Promise<void> {
     await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}`, {
       method: 'PUT',
       body: JSON.stringify(space),
@@ -597,6 +603,59 @@ class ApiService {
     });
   }
 
+  async getCurrentBudgets(spaceId: string): Promise<Budget[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/budgets/current`);
+    return response.json();
+  }
+
+  async getBudgetProgress(spaceId: string, budgetId: string): Promise<{
+    budget: Budget;
+    progress: {
+      totalSpent: number;
+      remainingAmount: number;
+      percentageUsed: number;
+      daysRemaining: number;
+      daysElapsed: number;
+      totalDays: number;
+      expectedSpendingRate: number;
+      actualSpendingRate: number;
+      isOverBudget: boolean;
+      projectedTotalSpending: number;
+    };
+    dailySpending: Array<{
+      date: Date;
+      amount: number;
+      transactionCount: number;
+    }>;
+    recentExpenses: Array<{
+      expenseId: string;
+      title: string;
+      amount: number;
+      date: Date;
+      notes?: string;
+    }>;
+  }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/budgets/${budgetId}/progress`);
+    return response.json();
+  }
+
+  async getBudgetAlerts(spaceId: string): Promise<Array<{
+    type: 'over_budget' | 'high_usage' | 'ending_soon';
+    severity: 'high' | 'medium' | 'low';
+    budgetId: string;
+    categoryName: string;
+    message: string;
+    budgetAmount: number;
+    spentAmount: number;
+    percentageUsed: number;
+    remainingAmount?: number;
+    overageAmount?: number;
+    daysRemaining?: number;
+  }>> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/budgets/alerts`);
+    return response.json();
+  }
+
   // Savings Goal endpoints
   async getSavingsGoals(spaceId: string): Promise<SavingsGoal[]> {
     const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/savingsgoals`);
@@ -634,6 +693,55 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(amount),
     });
+    return response.json();
+  }
+
+  async withdrawSavingsGoal(spaceId: string, goalId: string, amount: number): Promise<{ message: string; currentAmount: number }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/savingsgoals/${goalId}/withdraw`, {
+      method: 'POST',
+      body: JSON.stringify(amount),
+    });
+    return response.json();
+  }
+
+  async getSavingsGoalHistory(spaceId: string, goalId: string): Promise<Array<{
+    transactionId: string;
+    amount: number;
+    type: 'Contribution' | 'Withdrawal';
+    notes?: string;
+    date: Date;
+    createdAt: Date;
+  }>> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/savingsgoals/${goalId}/history`);
+    return response.json();
+  }
+
+  async getSavingsGoalsSummary(spaceId: string): Promise<{
+    totalGoals: number;
+    activeGoals: number;
+    completedGoals: number;
+    totalTargetAmount: number;
+    totalCurrentAmount: number;
+    overallProgress: number;
+    recentTransactions: Array<{
+      transactionId: string;
+      amount: number;
+      type: 'Contribution' | 'Withdrawal';
+      date: Date;
+      goalName: string;
+    }>;
+    goalsProgress: Array<{
+      goalId: string;
+      name: string;
+      targetAmount: number;
+      currentAmount: number;
+      progressPercentage: number;
+      isCompleted: boolean;
+      targetDate?: Date;
+      daysRemaining?: number;
+    }>;
+  }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/savingsgoals/summary`);
     return response.json();
   }
 
@@ -903,6 +1011,94 @@ class ApiService {
     
     const response = await this.fetchWithAuth(url);
     return response.blob();
+  }
+
+  // Recurring Expenses endpoints
+  async getRecurringExpenses(spaceId: string): Promise<RecurringExpense[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses`);
+    return response.json();
+  }
+
+  async getRecurringExpense(spaceId: string, recurringExpenseId: string): Promise<RecurringExpense> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses/${recurringExpenseId}`);
+    return response.json();
+  }
+
+  async createRecurringExpense(spaceId: string, recurringExpense: CreateRecurringExpenseDto): Promise<RecurringExpense> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses`, {
+      method: 'POST',
+      body: JSON.stringify(recurringExpense),
+    });
+    return response.json();
+  }
+
+  async updateRecurringExpense(spaceId: string, recurringExpenseId: string, recurringExpense: UpdateRecurringExpenseDto): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses/${recurringExpenseId}`, {
+      method: 'PUT',
+      body: JSON.stringify(recurringExpense),
+    });
+  }
+
+  async deleteRecurringExpense(spaceId: string, recurringExpenseId: string): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses/${recurringExpenseId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async generateRecurringExpense(spaceId: string, recurringExpenseId: string): Promise<{ message: string; expenseId: string; nextDueDate: Date }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses/${recurringExpenseId}/generate`, {
+      method: 'POST',
+    });
+    return response.json();
+  }
+
+  async getDueRecurringExpenses(spaceId: string): Promise<DueRecurringExpense[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringexpenses/due`);
+    return response.json();
+  }
+
+  // Recurring Incomes endpoints
+  async getRecurringIncomes(spaceId: string): Promise<RecurringIncome[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes`);
+    return response.json();
+  }
+
+  async getRecurringIncome(spaceId: string, recurringIncomeId: string): Promise<RecurringIncome> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes/${recurringIncomeId}`);
+    return response.json();
+  }
+
+  async createRecurringIncome(spaceId: string, recurringIncome: CreateRecurringIncomeDto): Promise<RecurringIncome> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes`, {
+      method: 'POST',
+      body: JSON.stringify(recurringIncome),
+    });
+    return response.json();
+  }
+
+  async updateRecurringIncome(spaceId: string, recurringIncomeId: string, recurringIncome: UpdateRecurringIncomeDto): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes/${recurringIncomeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(recurringIncome),
+    });
+  }
+
+  async deleteRecurringIncome(spaceId: string, recurringIncomeId: string): Promise<void> {
+    await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes/${recurringIncomeId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async generateRecurringIncome(spaceId: string, recurringIncomeId: string): Promise<{ message: string; incomeId: string; nextDueDate: Date }> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes/${recurringIncomeId}/generate`, {
+      method: 'POST',
+    });
+    return response.json();
+  }
+
+  async getDueRecurringIncomes(spaceId: string): Promise<DueRecurringIncome[]> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/spaces/${spaceId}/recurringincomes/due`);
+    return response.json();
   }
 }
 

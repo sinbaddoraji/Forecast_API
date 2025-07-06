@@ -4,7 +4,7 @@ import { useCategories, useBudgets } from '../hooks/useApiData';
 import { useSpace } from '../contexts/SpaceContext';
 import { apiService } from '../services/api';
 
-interface AddBudgetFormNewProps {
+interface AddBudgetFormProps {
   closeModal: () => void;
 }
 

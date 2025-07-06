@@ -6,6 +6,7 @@ import { AccountCard } from './AccountCard';
 import { AccountForm } from './AccountForm';
 import { Modal } from './Modal';
 import type { Account } from '../types/api';
+import { formatCurrencyCompact } from '../utils/currency';
 
 interface AccountsViewProps {
   showBalances: boolean;
@@ -79,10 +80,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ showBalances }) => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    return formatCurrencyCompact(amount, currentSpace?.currency || 'USD');
   };
 
   if (loading) {

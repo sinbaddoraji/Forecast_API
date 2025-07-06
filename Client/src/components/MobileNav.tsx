@@ -1,5 +1,5 @@
 import type { FC, Dispatch } from 'react';
-import { Home, Wallet, CreditCard, Target, PiggyBank, Plus, BarChart3 } from 'lucide-react';
+import { Home, Wallet, CreditCard, Target, PiggyBank, Plus, BarChart3, ArrowUpDown } from 'lucide-react';
 import type { AppState, AppAction } from '../types/budget';
 
 interface MobileNavProps {
@@ -14,6 +14,7 @@ export const MobileNav: FC<MobileNavProps> = ({ state, dispatch, onAddClick }) =
     { view: 'accounts', label: 'Wallet', icon: Wallet },
     { view: 'expenses', label: 'Expenses', icon: CreditCard },
     { view: 'reports', label: 'Reports', icon: BarChart3 },
+    { view: 'import-export', label: 'Import', icon: ArrowUpDown },
     { view: 'budgets', label: 'Budgets', icon: Target },
     { view: 'goals', label: 'Goals', icon: PiggyBank },
   ];

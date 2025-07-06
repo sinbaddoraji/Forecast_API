@@ -1,6 +1,8 @@
 import React from 'react';
 import { CreditCard, Wallet, PiggyBank, Banknote, TrendingUp, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 import type { Account } from '../types/api';
+import { useSpace } from '../contexts/SpaceContext';
+import { formatCurrencyCompact } from '../utils/currency';
 
 interface AccountCardProps {
   account: Account;
@@ -42,13 +44,6 @@ const getAccountTypeLabel = (type: string) => {
   }
 };
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount);
-};
-
 export const AccountCard: React.FC<AccountCardProps> = ({
   account,
   showBalance,
@@ -57,7 +52,11 @@ export const AccountCard: React.FC<AccountCardProps> = ({
   onViewTransactions
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
+  const { currentSpace } = useSpace();
   const IconComponent = getAccountIcon(account.type);
+  
+  // Get the currency from the current space, fallback to USD
+  const currency = currentSpace?.currency || 'USD';
 
   const handleMenuToggle = () => {
     setShowMenu(!showMenu);
@@ -137,7 +136,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">Current Balance</span>
           <span className="font-semibold text-lg">
-            {showBalance ? formatCurrency(account.currentBalance) : '****'}
+            {showBalance ? formatCurrencyCompact(account.currentBalance, currency) : '****'}
           </span>
         </div>
         
@@ -145,7 +144,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-500">Starting Balance</span>
             <span className="text-sm text-gray-600">
-              {showBalance ? formatCurrency(account.startingBalance) : '****'}
+              {showBalance ? formatCurrencyCompact(account.startingBalance, currency) : '****'}
             </span>
           </div>
         )}
@@ -159,7 +158,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
               {showBalance && (
                 <>
                   {account.currentBalance >= account.startingBalance ? '+' : ''}
-                  {formatCurrency(account.currentBalance - account.startingBalance)}
+                  {formatCurrencyCompact(account.currentBalance - account.startingBalance, currency)}
                 </>
               )}
               {!showBalance && '****'}

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { MoreHorizontal, Edit, Trash2, CreditCard, Calendar, FileText, DollarSign, User } from 'lucide-react';
 import type { Income } from '../types/api';
+import { useSpace } from '../contexts/SpaceContext';
+import { formatCurrencyCompact } from '../utils/currency';
 
 interface IncomeCardProps {
   income: Income;
@@ -10,15 +12,11 @@ interface IncomeCardProps {
 }
 
 export const IncomeCard: React.FC<IncomeCardProps> = ({ income, onEdit, onDelete, isDeleting = false }) => {
+  const { currentSpace } = useSpace();
+  const currency = currentSpace?.currency || 'USD';
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   const formatDate = (date: Date): string => {
     return new Intl.DateTimeFormat('en-US', {
@@ -61,7 +59,7 @@ export const IncomeCard: React.FC<IncomeCardProps> = ({ income, onEdit, onDelete
                   <div className="flex items-center gap-2 mt-1">
                     <DollarSign className="h-4 w-4 text-green-600" />
                     <span className="text-lg font-bold text-green-600">
-                      {formatCurrency(income.amount)}
+                      {formatCurrencyCompact(income.amount, currency)}
                     </span>
                   </div>
                 </div>

@@ -18,6 +18,9 @@ public class CoreDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Income> Incomes { get; set; }
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<SavingsGoal> SavingsGoals { get; set; }
+    public DbSet<SavingsGoalTransaction> SavingsGoalTransactions { get; set; }
+    public DbSet<RecurringExpense> RecurringExpenses { get; set; }
+    public DbSet<RecurringIncome> RecurringIncomes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +33,18 @@ public class CoreDbContext : Microsoft.EntityFrameworkCore.DbContext
 
         modelBuilder.Entity<SpaceMember>()
             .Property(e => e.Role)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<SavingsGoalTransaction>()
+            .Property(e => e.Type)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<RecurringExpense>()
+            .Property(e => e.Frequency)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<RecurringIncome>()
+            .Property(e => e.Frequency)
             .HasConversion<string>();
 
         // Configure composite key for SpaceMember
@@ -127,6 +142,60 @@ public class CoreDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasForeignKey(sg => sg.SpaceId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<SavingsGoalTransaction>()
+            .HasOne(sgt => sgt.SavingsGoal)
+            .WithMany()
+            .HasForeignKey(sgt => sgt.GoalId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SavingsGoalTransaction>()
+            .HasOne(sgt => sgt.Space)
+            .WithMany()
+            .HasForeignKey(sgt => sgt.SpaceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RecurringExpense>()
+            .HasOne(re => re.Space)
+            .WithMany()
+            .HasForeignKey(re => re.SpaceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RecurringExpense>()
+            .HasOne(re => re.Account)
+            .WithMany()
+            .HasForeignKey(re => re.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecurringExpense>()
+            .HasOne(re => re.Category)
+            .WithMany()
+            .HasForeignKey(re => re.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecurringExpense>()
+            .HasOne(re => re.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(re => re.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecurringIncome>()
+            .HasOne(ri => ri.Space)
+            .WithMany()
+            .HasForeignKey(ri => ri.SpaceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RecurringIncome>()
+            .HasOne(ri => ri.Account)
+            .WithMany()
+            .HasForeignKey(ri => ri.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RecurringIncome>()
+            .HasOne(ri => ri.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(ri => ri.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configure indexes for better query performance
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
@@ -144,6 +213,15 @@ public class CoreDbContext : Microsoft.EntityFrameworkCore.DbContext
 
         modelBuilder.Entity<Budget>()
             .HasIndex(b => new { b.SpaceId, b.StartDate, b.EndDate });
+
+        modelBuilder.Entity<SavingsGoalTransaction>()
+            .HasIndex(sgt => new { sgt.GoalId, sgt.Date });
+
+        modelBuilder.Entity<RecurringExpense>()
+            .HasIndex(re => new { re.SpaceId, re.NextDueDate, re.IsActive });
+
+        modelBuilder.Entity<RecurringIncome>()
+            .HasIndex(ri => new { ri.SpaceId, ri.NextDueDate, ri.IsActive });
 
     }
 }

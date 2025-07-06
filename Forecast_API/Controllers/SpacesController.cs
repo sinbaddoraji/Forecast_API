@@ -50,6 +50,7 @@ namespace Forecast_API.Controllers
                     {
                         sm.Space.SpaceId,
                         sm.Space.Name,
+                        sm.Space.Currency,
                         sm.Space.OwnerId,
                         sm.Space.CreatedAt,
                         sm.Space.UpdatedAt,
@@ -88,6 +89,7 @@ namespace Forecast_API.Controllers
             {
                 space.SpaceId,
                 space.Name,
+                space.Currency,
                 space.OwnerId,
                 space.CreatedAt,
                 space.UpdatedAt
@@ -106,6 +108,7 @@ namespace Forecast_API.Controllers
                 {
                     SpaceId = Guid.NewGuid(),
                     Name = request.Name,
+                    Currency = request.Currency,
                     OwnerId = user.UserId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -129,6 +132,7 @@ namespace Forecast_API.Controllers
                 {
                     space.SpaceId,
                     space.Name,
+                    space.Currency,
                     space.OwnerId,
                     space.CreatedAt,
                     space.UpdatedAt
@@ -166,6 +170,10 @@ namespace Forecast_API.Controllers
             }
 
             space.Name = request.Name ?? space.Name;
+            if (!string.IsNullOrEmpty(request.Currency))
+            {
+                space.Currency = request.Currency;
+            }
             space.UpdatedAt = DateTime.UtcNow;
 
             try
@@ -374,11 +382,13 @@ namespace Forecast_API.Controllers
     public class CreateSpaceRequest
     {
         public string Name { get; set; } = string.Empty;
+        public string Currency { get; set; } = "USD";
     }
 
     public class UpdateSpaceRequest
     {
         public string? Name { get; set; }
+        public string? Currency { get; set; }
     }
 
     public class AddSpaceMemberRequest

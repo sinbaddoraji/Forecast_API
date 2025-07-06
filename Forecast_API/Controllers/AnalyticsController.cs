@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Forecast_API.Data;
+using Forecast_API.Models;
 using Forecast_API.Models.DTOs;
 using Forecast_API.Services;
 
@@ -184,7 +185,7 @@ public class AnalyticsController : ControllerBase
             {
                 CategoryId = ce.CategoryId,
                 CategoryName = ce.CategoryName,
-                CategoryColor = ce.CategoryColor,
+                CategoryColor = ce.CategoryColor ?? "#6B7280",
                 Amount = ce.Amount,
                 Percentage = totalAmount > 0 ? (ce.Amount / totalAmount) * 100 : 0
             }).OrderByDescending(cb => cb.Amount).ToList();
@@ -248,7 +249,7 @@ public class AnalyticsController : ControllerBase
                     {
                         CategoryId = g.Key.CategoryId,
                         CategoryName = g.Key.Name,
-                        CategoryColor = g.Key.Color,
+                        CategoryColor = g.Key.Color ?? "#6B7280",
                         Amount = g.Sum(e => e.Amount),
                         Percentage = totalExpenses > 0 ? (g.Sum(e => e.Amount) / totalExpenses) * 100 : 0
                     })

@@ -13,6 +13,8 @@ import { CategoriesView } from './CategoriesView';
 import { BudgetsView } from './BudgetsView';
 import { GoalsView } from './GoalsView';
 import { AnalyticsView } from './AnalyticsView';
+import ImportExportView from './ImportExportView';
+import SettingsView from './SettingsView';
 import { AddTransactionForm } from './AddTransactionForm';
 import { AddBudgetForm } from './AddBudgetForm';
 import { AddGoalForm } from './AddGoalForm';
@@ -91,6 +93,10 @@ const BudgetingPWAContent: React.FC<BudgetingPWAContentProps> = ({
         return <BudgetsView onAddBudget={() => setShowAddBudget(true)} />;
       case 'goals':
         return <GoalsView onAddGoal={() => setShowAddGoal(true)} />;
+      case 'import-export':
+        return <ImportExportView />;
+      case 'settings':
+        return <SettingsView />;
       case 'reports':
         return <AnalyticsView showBalances={showBalances} />;
       default:
