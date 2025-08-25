@@ -2,6 +2,9 @@
 
 This document outlines the vision, features, and development roadmap for a personal finance solution, delivered as a single Progressive Web App (PWA).
 
+<img width="1463" height="901" alt="image" src="https://github.com/user-attachments/assets/baf31f9c-7665-4b8e-aa36-e4454f350b0e" />
+
+
 ## 1. Application Overview
 
 ### Detailed Description
